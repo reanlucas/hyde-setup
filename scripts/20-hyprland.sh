@@ -20,6 +20,29 @@ s = re.sub(re.escape(ini) + r".*?" + re.escape(fim) + r"\n?", "", s, flags=re.S)
 open(alvo, "w").write(s.rstrip() + "\n")
 PY
 
+# Spotify na bandeja: regra de janela + autostart, montados aqui para que o
+# bloco continue sendo escrito de uma vez so.
+SPOTIFY_LUA=""
+SPOTIFY_EXEC=""
+if [ "${SPOTIFY_TRAY:-0}" = "1" ]; then
+    SPOTIFY_LUA='
+-- Spotify sobe com a sessao e vai direto para o scratchpad: sem roubar foco,
+-- sem ocupar workspace. A bandeja do waybar e o widget de player controlam a
+-- reproducao; SUPER + S (bind do HyDE) mostra a janela.
+--
+-- "--minimized" nao serve: o proprio "spotify --help" diz que so vale no
+-- Windows. No Hyprland quem minimiza e a regra de janela.
+hl.window_rule({
+    name             = "spotify-bandeja",
+    match            = { class = "^([Ss]potify)$" },
+    workspace        = "special silent",
+    no_initial_focus = true,
+})
+'
+    SPOTIFY_EXEC='
+    hl.exec_cmd("spotify --ozone-platform=wayland")'
+fi
+
 cat >> "$ALVO" <<LUA
 
 $INI
@@ -53,10 +76,10 @@ hl.bind("${WIDGETS_TECLA/, / + }", hl.dsp.exec_cmd("\$HOME/.local/bin/hyde-widge
 
 -- Vidro real nas superficies dos widgets
 hl.layer_rule({ "blur", "ignorealpha 0.2" }, "hyde-widgets")
-
+${SPOTIFY_LUA}
 hl.on("hyprland.start", function()
     hl.exec_cmd("\$HOME/.local/bin/hyde-widgets --show")
-    hl.exec_cmd("\$HOME/.local/bin/hyde-ai --daemon")
+    hl.exec_cmd("\$HOME/.local/bin/hyde-ai --daemon")${SPOTIFY_EXEC}
 end)
 $FIM
 LUA

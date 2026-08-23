@@ -44,5 +44,5 @@ HYDEAI_TECLA2="SUPER, dead_grave" # com KB_VARIANT=intl a tecla ` emite
                                   # dead_grave; com us puro seria "grave"
 
 # ── Aplicativos ──────────────────────────────────────────────────────────
-SPOTIFY_TRAY=1                    # inicia minimizado na bandeja
+SPOTIFY_TRAY=1                    # sobe com a sessao, direto no scratchpad (SUPER+S mostra)
 SPICETIFY=1                       # aplica o tema wallbash no Spotify

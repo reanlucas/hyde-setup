@@ -4,18 +4,12 @@ set -uo pipefail
 . "$(dirname "${BASH_SOURCE[0]}")/../setup.conf"
 
 if [ "${SPOTIFY_TRAY:-0}" = "1" ] && command -v spotify >/dev/null 2>&1; then
-    echo "==> Spotify inicia na bandeja"
-    mkdir -p "$HOME/.config/autostart"
-    cat > "$HOME/.config/autostart/spotify-tray.desktop" <<'DESK'
-[Desktop Entry]
-Type=Application
-Name=Spotify (bandeja)
-Exec=spotify --ozone-platform=wayland --minimized
-X-GNOME-Autostart-enabled=true
-NoDisplay=true
-DESK
-    # spotify-flags.conf: o HyDE ja usa este arquivo para as flags do cliente
+    echo "==> Spotify na bandeja"
+    # O autostart e a regra de janela ficam no bloco lua (etapa 20). Aqui so
+    # as flags do cliente. Um .desktop em ~/.config/autostart nao serviria:
+    # o Hyprland nao dispara o xdg-desktop-autostart por conta propria.
     printf -- '--ozone-platform=wayland\n' > "$HOME/.config/spotify-flags.conf"
+    rm -f "$HOME/.config/autostart/spotify-tray.desktop"   # de versoes antigas
 fi
 
 if [ "${SPICETIFY:-0}" = "1" ] && command -v spicetify >/dev/null 2>&1; then

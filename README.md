@@ -19,9 +19,13 @@ integrações de aplicativo.
 ## O resultado
 
 <div align="center">
-  <img src="docs/desktop.png" width="860" alt="Finished desktop after running hyde-setup: HyDE bar on top, clock and weather widgets on the left, CPU/GPU/memory panels on the right, music player and audio visualiser at the bottom">
-  <p><em>What the three stages add up to: HyDE underneath, plus the widget set,
-  the LLM sidebar and every setting this repo applies.</em></p>
+  <img src="docs/desktop.gif" width="860" alt="The finished desktop running: Spotify plays from the tray while the audio visualiser and the metric charts move">
+  <p><em>What the five stages add up to. Spotify is playing from the tray &mdash;
+  it started with the session and never took a workspace.</em></p>
+</div>
+
+<div align="center">
+  <img src="docs/desktop.png" width="820" alt="Finished desktop after running hyde-setup: HyDE bar on top, clock and weather widgets on the left, CPU/GPU/memory panels on the right, music player and audio visualiser at the bottom">
 </div>
 
 ---
@@ -91,9 +95,9 @@ hyde-ai --setup         # chaves de API do chat
 | Etapa | Conteúdo |
 |---|---|
 | `10-pacotes` | extras do HyDE, ferramentas, `ollama` com ajuste de GPU, modelo inicial |
-| `20-hyprland` | monitor, teclado, atalhos e autostart |
+| `20-hyprland` | monitor, teclado, atalhos, autostart e Spotify na bandeja |
 | `30-teclado` | `~/.XCompose` para `'` + `c` = ç |
-| `40-apps` | Spotify na bandeja, spicetify com as cores do tema, Vulkan |
+| `40-apps` | flags do Spotify, spicetify com as cores do tema, Vulkan |
 | `50-modulos` | clona e instala `hyde-widgets` e `hyde-ai` |
 
 ---
@@ -146,6 +150,30 @@ texto borrado.
 
 Vários PKGBUILDs clonam por `http://`, bloqueado em redes corporativas — o
 `paru` trava sem mensagem de erro. A etapa `10` configura a reescrita.
+
+</details>
+
+<details>
+<summary><b>Spotify na bandeja sem <code>--minimized</code></b></summary>
+
+O `--minimized` do Spotify **não funciona no Linux** — o próprio
+`spotify --help` diz "Only works on Windows". No Hyprland quem minimiza é a
+regra de janela: o cliente sobe com a sessão e vai direto para o scratchpad,
+sem roubar o foco nem ocupar workspace.
+
+```lua
+hl.window_rule({
+    match            = { class = "^([Ss]potify)$" },
+    workspace        = "special silent",
+    no_initial_focus = true,
+})
+```
+
+`SUPER + S`, que é do próprio HyDE, mostra a janela. O ícone da bandeja e o
+widget de player controlam a reprodução sem precisar dela.
+
+Um `.desktop` em `~/.config/autostart` também não serviria: o Hyprland não
+dispara o `xdg-desktop-autostart` por conta própria.
 
 </details>
 
