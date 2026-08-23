@@ -19,13 +19,9 @@ integrações de aplicativo.
 ## O resultado
 
 <div align="center">
-  <img src="docs/relogio-clima.png" width="290" alt="Relógio e clima">
-  &nbsp;&nbsp;
-  <img src="docs/painel-metricas.png" width="320" alt="CPU, GPU e memória">
-</div>
-
-<div align="center">
-  <img src="docs/player.png" width="620" alt="Player de música">
+  <img src="docs/desktop.png" width="860" alt="Finished desktop after running hyde-setup: HyDE bar on top, clock and weather widgets on the left, CPU/GPU/memory panels on the right, music player and audio visualiser at the bottom">
+  <p><em>What the three stages add up to: HyDE underneath, plus the widget set,
+  the LLM sidebar and every setting this repo applies.</em></p>
 </div>
 
 ---
