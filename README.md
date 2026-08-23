@@ -2,21 +2,21 @@
 
 # hyde-setup
 
-**Pós-instalação pessoal do [HyDE](https://github.com/HyDE-Project/HyDE) no Arch.**
+**Post-install setup for [HyDE](https://github.com/HyDE-Project/HyDE) on Arch.**
 
 ```
 Arch minimal  →  HyDE  →  hyde-setup
 ```
 
-Automatiza o que fica de fora do HyDE: pacotes extras, LLM local com aceleração
-de GPU, dois módulos próprios, teclado com acentuação portuguesa, monitor e
-integrações de aplicativo.
+Automates what HyDE leaves out: extra packages, a local LLM with GPU
+acceleration, two custom modules, Portuguese accents on a US keyboard, monitor
+setup and app integrations.
 
 </div>
 
 ---
 
-## O resultado
+## The result
 
 <div align="center">
   <img src="docs/desktop.gif" width="860" alt="The finished desktop running: Spotify plays from the tray while the audio visualiser and the metric charts move">
@@ -30,172 +30,175 @@ integrações de aplicativo.
 
 <div align="center">
   <img src="docs/temas.gif" width="860" alt="Three HyDE themes applied one after another; the wallpaper, the bar, the desktop widgets and the AI sidebar all recolour together, light themes included">
-  <p><em>Tudo sai do mesmo wallbash. Trocar de tema repinta a barra, os widgets e
-  a barra lateral de LLM juntos &mdash; inclusive nos temas claros.</em></p>
+  <p><em>It all comes from the same wallbash. A theme switch repaints the bar, the
+  desktop widgets and the LLM sidebar together &mdash; light themes included.</em></p>
 </div>
 
 ---
 
-## Instalação
+## Installation
 
 ### 1. Base
 
-Arch Linux com o [HyDE](https://github.com/HyDE-Project/HyDE) já instalado.
-Este repositório **roda depois** — assume Hyprland funcionando e
-`~/.config/hypr` no lugar.
+Arch Linux with [HyDE](https://github.com/HyDE-Project/HyDE) already installed.
+This repository **runs afterwards** — it assumes a working Hyprland and
+`~/.config/hypr` in place.
 
-### 2. Clonar
+### 2. Clone
 
 ```bash
 git clone https://github.com/reanlucas/hyde-setup.git
 cd hyde-setup
 ```
 
-### 3. Primeira execução — gera a configuração
+### 3. First run — generates the config
 
 ```bash
 ./install.sh
 ```
 
-Cria o `setup.conf` a partir do exemplo e para, sem aplicar nada.
+Creates `setup.conf` from the example and stops, applying nothing.
 
-### 4. Ajustar ao seu hardware
+### 4. Fit it to your hardware
 
 ```bash
 $EDITOR setup.conf
 ```
 
-O mínimo a revisar:
+The minimum to review:
 
-| Chave | Como descobrir |
+| Key | How to find it |
 |---|---|
 | `MONITOR_SAIDA` `MONITOR_MODO` | `hyprctl monitors` |
-| `MONITOR_ESCALA` | a divisão precisa dar inteiro — `2560/1.25 = 2048` ✅ |
-| `GPU_VENDOR` `OLLAMA_PACOTE` | `amd` → `ollama-rocm`, senão `ollama` |
-| `OLLAMA_MODELO` | precisa caber na sua VRAM |
-| `KB_VARIANT` | `intl` ou `altgr-intl` — veja abaixo |
+| `MONITOR_ESCALA` | the division must come out whole — `2560/1.25 = 2048` ✅ |
+| `GPU_VENDOR` `OLLAMA_PACOTE` | `amd` → `ollama-rocm`, otherwise `ollama` |
+| `OLLAMA_MODELO` | must fit in your VRAM |
+| `KB_VARIANT` | `intl` or `altgr-intl` — see below |
 
-### 5. Aplicar
+### 5. Apply
 
 ```bash
 ./install.sh
 ```
 
-Idempotente: rodar de novo reaplica sem duplicar. Para reexecutar só uma etapa:
+Idempotent: running it again reapplies without duplicating. To rerun a single
+stage:
 
 ```bash
 ./install.sh 20
 ```
 
-### 6. Depois
+### 6. Afterwards
 
 ```bash
-hyde-widgets --show     # widgets do desktop
-hyde-ai --setup         # chaves de API do chat
+hyde-widgets --show     # desktop widgets
+hyde-ai --setup         # chat API keys
 ```
 
 ---
 
-## As etapas
+## The stages
 
-| Etapa | Conteúdo |
+| Stage | Contents |
 |---|---|
-| `10-pacotes` | extras do HyDE, ferramentas, `ollama` com ajuste de GPU, modelo inicial |
-| `20-hyprland` | monitor, teclado, atalhos, autostart e Spotify na bandeja |
-| `30-teclado` | `~/.XCompose` para `'` + `c` = ç |
-| `40-apps` | flags do Spotify, spicetify, `Ctrl+C`/`Ctrl+V` no kitty, tema do VS Code, Vulkan |
-| `50-modulos` | clona e instala `hyde-widgets` e `hyde-ai` |
+| `10-pacotes` | HyDE extras, tooling, `ollama` tuned for the GPU, first model |
+| `20-hyprland` | monitor, keyboard, keybinds, autostart and Spotify in the tray |
+| `30-teclado` | `~/.XCompose` so `'` + `c` gives ç |
+| `40-apps` | Spotify flags, spicetify, `Ctrl+C`/`Ctrl+V` in kitty, VS Code theme, waybar scale, Vulkan |
+| `50-modulos` | clones and installs `hyde-widgets` and `hyde-ai` |
 
 ---
 
-## Teclado
+## Keyboard
 
-Duas opções, ambas sobre layout americano:
+Two options, both on top of the US layout:
 
 | | `intl` | `altgr-intl` |
 |---|---|---|
-| `'` `"` `` ` `` `~` | dead keys | **normais** |
-| Acento | `'` + `a` = á | `AltGr` + `'` + `a` = á |
-| Cedilha | `'` + `c` = ç ¹ | `AltGr` + `,` = ç |
-| Programar | atrito com aspas | sem atrito |
+| `'` `"` `` ` `` `~` | dead keys | **plain** |
+| Accent | `'` + `a` = á | `AltGr` + `'` + `a` = á |
+| Cedilla | `'` + `c` = ç ¹ | `AltGr` + `,` = ç |
+| Writing code | quotes get in the way | no friction |
 
-¹ exige o `~/.XCompose` que a etapa `30` instala — o xkb sozinho mapeia
-`'` + `c` para `ć`, letra que não existe em português.
+¹ needs the `~/.XCompose` that stage `30` installs — xkb on its own maps
+`'` + `c` to `ć`, a letter Portuguese does not have.
 
 ---
 
-## Decisões que valem explicar
+## Decisions worth explaining
 
 <details>
-<summary><b>O override do usuário, nunca os arquivos do HyDE</b></summary>
+<summary><b>The user override, never HyDE's own files</b></summary>
 
-Tudo é escrito em `~/.config/hypr/hyprland.lua`, que o HyDE não sobrescreve nas
-atualizações. O bloco é delimitado por marcadores e reescrito por inteiro a
-cada execução, o que mantém o script idempotente.
+Everything is written to `~/.config/hypr/hyprland.lua`, which HyDE does not
+overwrite on update. The block is delimited by markers and rewritten whole on
+every run, which is what keeps the script idempotent.
 
 </details>
 
 <details>
-<summary><b>cm = "srgb", não "hdr"</b></summary>
+<summary><b>cm = "srgb", not "hdr"</b></summary>
 
-Ligar HDR mapeia o conteúdo SDR para ~80 nits de referência e **escurece** o
-desktop — o oposto do esperado. Só vale com conteúdo HDR de verdade.
-
-</details>
-
-<details>
-<summary><b>A escala precisa dar pixel inteiro</b></summary>
-
-`2560 / 1.25 = 2048` funciona. `2560 / 1.3` não dá inteiro, e o resultado é
-texto borrado.
+Turning HDR on maps SDR content to a ~80-nit reference and **darkens** the
+desktop — the opposite of what you'd expect. It only pays off with real HDR
+content.
 
 </details>
 
 <details>
-<summary><b>git url.insteadOf para https</b></summary>
+<summary><b>The scale has to land on whole pixels</b></summary>
 
-Vários PKGBUILDs clonam por `http://`, bloqueado em redes corporativas — o
-`paru` trava sem mensagem de erro. A etapa `10` configura a reescrita.
+`2560 / 1.25 = 2048` works. `2560 / 1.3` doesn't divide evenly, and the result
+is blurry text.
 
 </details>
 
 <details>
-<summary><b>O <code>Shift+F11</code> do HyDE parece quebrado, e não é</b></summary>
+<summary><b>git url.insteadOf for https</b></summary>
 
-O bind padrão cicla **três** estados: `0` → `1` (maximizar) → `2` (fullscreen).
-Num layout de tiles o estado `1` é visualmente idêntico à janela já ladrilhada,
-então a primeira tecla não muda nada na tela — só na segunda vem o fullscreen,
-e na terceira ele sai.
+Several PKGBUILDs clone over `http://`, which corporate networks block — `paru`
+then hangs with no error message. Stage `10` configures the rewrite.
 
-A etapa `20` troca por alternância direta, entra e sai numa tecla só:
+</details>
+
+<details>
+<summary><b>HyDE's <code>Shift+F11</code> looks broken, and isn't</b></summary>
+
+The stock bind cycles **three** states: `0` → `1` (maximise) → `2`
+(fullscreen). In a tiling layout state `1` is visually identical to the window
+already tiled, so the first press changes nothing on screen — fullscreen only
+arrives on the second, and leaves on the third.
+
+Stage `20` swaps it for a straight toggle, in and out on one key:
 
 ```lua
 hl.bind("SHIFT + F11", hl.dsp.window.fullscreen(), { ... })
 ```
 
-Como o override do usuário carrega depois do HyDE e os *flags* batem, o bind é
-substituído, não duplicado.
+Since the user override loads after HyDE and the *flags* match, the bind is
+replaced rather than duplicated. `SUPER + F` is bound to the same thing, for
+keyboards whose F-row sends media keysyms.
 
 </details>
 
 <details>
-<summary><b><code>Ctrl+C</code> no terminal sem perder o SIGINT</b></summary>
+<summary><b><code>Ctrl+C</code> in the terminal without losing SIGINT</b></summary>
 
-O kitty usa `copy_or_interrupt`, não `copy_to_clipboard`: havendo seleção,
-copia; sem seleção, manda o `SIGINT` de sempre. Mapear direto para copiar
-tiraria a função mais usada da tecla num terminal.
+kitty uses `copy_or_interrupt`, not `copy_to_clipboard`: with a selection it
+copies, without one it sends the usual `SIGINT`. Mapping it straight to copy
+would take away the key's most frequent job in a terminal.
 
-`Ctrl+Shift+C` e `Ctrl+Shift+V` continuam valendo.
+`Ctrl+Shift+C` and `Ctrl+Shift+V` keep working.
 
 </details>
 
 <details>
-<summary><b>Spotify na bandeja sem <code>--minimized</code></b></summary>
+<summary><b>Spotify in the tray without <code>--minimized</code></b></summary>
 
-O `--minimized` do Spotify **não funciona no Linux** — o próprio
-`spotify --help` diz "Only works on Windows". No Hyprland quem minimiza é a
-regra de janela: o cliente sobe com a sessão e vai direto para o scratchpad,
-sem roubar o foco nem ocupar workspace.
+Spotify's `--minimized` **does not work on Linux** — `spotify --help` says so
+itself: "Only works on Windows". On Hyprland the window rule is what minimises:
+the client starts with the session and goes straight to the scratchpad, without
+stealing focus or taking a workspace.
 
 ```lua
 hl.window_rule({
@@ -205,52 +208,52 @@ hl.window_rule({
 })
 ```
 
-`SUPER + S`, que é do próprio HyDE, mostra a janela. O ícone da bandeja e o
-widget de player controlam a reprodução sem precisar dela.
+`SUPER + S`, HyDE's own bind, reveals the window. The tray icon and the player
+widget drive playback without it.
 
-Um `.desktop` em `~/.config/autostart` também não serviria: o Hyprland não
-dispara o `xdg-desktop-autostart` por conta própria.
+A `.desktop` in `~/.config/autostart` wouldn't help either: Hyprland does not
+fire `xdg-desktop-autostart` on its own.
 
 </details>
 
 <details>
-<summary><b>Ajuste do Ollama</b></summary>
+<summary><b>Ollama tuning</b></summary>
 
-`flash attention`, cache KV em `q8_0` e contexto de 32k — tudo cabendo na GPU.
-Sem isso o contexto fica no padrão de 4096, que é pouco.
+Flash attention, `q8_0` KV cache and a 32k context — all of it fitting on the
+GPU. Without this the context stays at the default 4096, which is not much.
 
 </details>
 
 ---
 
-## O que este repositório garante — e o que não
+## What this repository guarantees — and what it doesn't
 
-Rodar `install.sh` num Arch recém-instalado com HyDE reproduz **todas as
-configurações** desta máquina: monitor, teclado com acentuação, atalhos,
-autostart, Spotify na bandeja, kitty, VS Code, Ollama e os dois módulos. Os
-scripts são idempotentes e foram testados escrevendo num `HOME` descartável.
+Running `install.sh` on a fresh Arch with HyDE reproduces **every setting** on
+this machine: monitor, accented keyboard, keybinds, autostart, Spotify in the
+tray, kitty, VS Code, waybar scale, Ollama and both modules. The scripts are
+idempotent and were tested writing into a throwaway `HOME`.
 
-O que **não** está sob controle deste repositório:
-
-| | |
-|---|---|
-| Versões de pacote | nada é fixado; uma instalação de hoje traz o que está nos repositórios hoje |
-| Temas do HyDE | vêm do instalador do HyDE, não daqui |
-| Chaves de API | ficam de fora de propósito — `hyde-ai --setup` pede depois |
-| Modelo do Ollama | depende de baixar alguns GB |
-| Hardware diferente | `setup.conf` precisa ser ajustado; o exemplo traz os valores desta máquina |
-
----
-
-## Módulos
+What is **not** under this repository's control:
 
 | | |
 |---|---|
-| [hyde-widgets](https://github.com/reanlucas/hyde-widgets) | widgets de desktop em Quickshell |
-| [hyde-ai](https://github.com/reanlucas/hyde-ai) | chat com LLM na barra lateral · **beta** |
+| Package versions | nothing is pinned; installing today gets what the repos hold today |
+| HyDE themes | they come from HyDE's installer, not from here |
+| API keys | deliberately left out — `hyde-ai --setup` asks later |
+| The Ollama model | a few GB of download |
+| Different hardware | `setup.conf` needs editing; the example carries this machine's values |
 
 ---
 
-## Licença
+## Modules
+
+| | |
+|---|---|
+| [hyde-widgets](https://github.com/reanlucas/hyde-widgets) | desktop widgets in Quickshell |
+| [hyde-ai](https://github.com/reanlucas/hyde-ai) | LLM chat in a sidebar · **beta** |
+
+---
+
+## Licence
 
 MIT

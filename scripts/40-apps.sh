@@ -67,6 +67,21 @@ PY
     hyde-shell wallbash code >/dev/null 2>&1 || true
 fi
 
+if [ -n "${WAYBAR_ESCALA:-}" ]; then
+    echo "==> Escala do waybar: ${WAYBAR_ESCALA}px"
+    # WAYBAR_SCALE e a fonte de maior prioridade que o waybar.py consulta;
+    # o padrao do HyDE (10px) fica pequeno em monitor grande com escala 1.25.
+    ESTADO="${XDG_STATE_HOME:-$HOME/.local/state}/hyde/config"
+    mkdir -p "$(dirname "$ESTADO")"; touch "$ESTADO"
+    if grep -q "^WAYBAR_SCALE=" "$ESTADO"; then
+        sed -i "s/^WAYBAR_SCALE=.*/WAYBAR_SCALE=${WAYBAR_ESCALA}/" "$ESTADO"
+    else
+        echo "WAYBAR_SCALE=${WAYBAR_ESCALA}" >> "$ESTADO"
+    fi
+    [ -x "$HOME/.local/lib/hyde/waybar.py" ] \
+        && "$HOME/.local/lib/hyde/waybar.py" -g >/dev/null 2>&1 || true
+fi
+
 if [ "$GPU_VENDOR" = "amd" ]; then
     echo "==> Vulkan AMD"
     sudo pacman -S --needed --noconfirm vulkan-radeon lib32-vulkan-radeon || true
