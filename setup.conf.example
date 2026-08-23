@@ -37,6 +37,7 @@ OLLAMA_KEEP_ALIVE="30m"
 # ── Widgets ──────────────────────────────────────────────────────────────
 WIDGETS_CAMADA="back"             # back = atras das janelas | front
 WIDGETS_TECLA="SUPER, D"          # alterna a camada
+FULLSCREEN_TECLA="SHIFT, F11"     # alternancia direta, sem o ciclo de 3 estados
 
 # ── hyde-ai ──────────────────────────────────────────────────────────────
 HYDEAI_TECLA1="SUPER, I"
@@ -46,3 +47,5 @@ HYDEAI_TECLA2="SUPER, dead_grave" # com KB_VARIANT=intl a tecla ` emite
 # ── Aplicativos ──────────────────────────────────────────────────────────
 SPOTIFY_TRAY=1                    # sobe com a sessao, direto no scratchpad (SUPER+S mostra)
 SPICETIFY=1                       # aplica o tema wallbash no Spotify
+KITTY_COPIA_COLA=1                # Ctrl+C / Ctrl+V no terminal
+VSCODE_WALLBASH=1                 # tema Wallbash no VS Code / VSCodium

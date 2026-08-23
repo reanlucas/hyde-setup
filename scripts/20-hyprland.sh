@@ -76,6 +76,14 @@ hl.bind("${WIDGETS_TECLA/, / + }", hl.dsp.exec_cmd("\$HOME/.local/bin/hyde-widge
 
 -- Vidro real nas superficies dos widgets
 hl.layer_rule({ "blur", "ignorealpha 0.2" }, "hyde-widgets")
+
+-- O bind do HyDE cicla tres estados: 0 -> 1 (maximizar) -> 2 (fullscreen).
+-- Num layout de tiles o estado 1 e visualmente identico a janela ja
+-- ladrilhada, entao a primeira tecla nao muda nada na tela e o atalho parece
+-- quebrado -- so na segunda vem o fullscreen. Aqui vira alternancia direta.
+hl.bind("${FULLSCREEN_TECLA/, / + }", hl.dsp.window.fullscreen(), {
+    description = "[Window Management] toggle fullscreen",
+})
 ${SPOTIFY_LUA}
 hl.on("hyprland.start", function()
     hl.exec_cmd("\$HOME/.local/bin/hyde-widgets --show")

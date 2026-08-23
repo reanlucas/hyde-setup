@@ -22,6 +22,51 @@ if [ "${SPICETIFY:-0}" = "1" ] && command -v spicetify >/dev/null 2>&1; then
     echo "    obs: atualizacoes do pacote spotify desfazem isto; rode de novo"
 fi
 
+if [ "${KITTY_COPIA_COLA:-0}" = "1" ] && command -v kitty >/dev/null 2>&1; then
+    echo "==> kitty com Ctrl+C / Ctrl+V"
+    CONF="$HOME/.config/kitty/kitty.conf"
+    mkdir -p "$(dirname "$CONF")"
+    touch "$CONF"
+    if ! grep -q "hyde-setup: copia e cola" "$CONF"; then
+        cat >> "$CONF" <<'KITTY'
+
+# >>> hyde-setup: copia e cola
+# copy_or_interrupt (e nao copy_to_clipboard): havendo selecao, copia; sem
+# selecao, manda o SIGINT normal. Sem isso Ctrl+C deixaria de interromper
+# processos, que e o uso mais frequente da tecla num terminal.
+map ctrl+c  copy_or_interrupt
+map ctrl+v  paste_from_clipboard
+# os originais continuam valendo, para quem tem o dedo acostumado
+map ctrl+shift+c  copy_to_clipboard
+map ctrl+shift+v  paste_from_clipboard
+# <<< hyde-setup
+KITTY
+    fi
+    pkill -USR1 -x kitty 2>/dev/null || true    # recarrega sem fechar
+fi
+
+if [ "${VSCODE_WALLBASH:-0}" = "1" ]; then
+    echo "==> VS Code com o tema do wallbash"
+    for dir in "$HOME/.config/Code/User" "$HOME/.config/VSCodium/User"; do
+        [ -d "$(dirname "$dir")" ] || continue
+        mkdir -p "$dir"
+        [ -f "$dir/settings.json" ] || echo '{}' > "$dir/settings.json"
+        python3 - "$dir/settings.json" <<'PY'
+import json, sys
+alvo = sys.argv[1]
+try:
+    with open(alvo) as f:
+        d = json.load(f)
+except Exception:
+    d = {}
+d["workbench.colorTheme"] = "Wallbash"
+with open(alvo, "w") as f:
+    json.dump(d, f, indent=2)
+PY
+    done
+    hyde-shell wallbash code >/dev/null 2>&1 || true
+fi
+
 if [ "$GPU_VENDOR" = "amd" ]; then
     echo "==> Vulkan AMD"
     sudo pacman -S --needed --noconfirm vulkan-radeon lib32-vulkan-radeon || true

@@ -103,7 +103,7 @@ hyde-ai --setup         # chaves de API do chat
 | `10-pacotes` | extras do HyDE, ferramentas, `ollama` com ajuste de GPU, modelo inicial |
 | `20-hyprland` | monitor, teclado, atalhos, autostart e Spotify na bandeja |
 | `30-teclado` | `~/.XCompose` para `'` + `c` = ç |
-| `40-apps` | flags do Spotify, spicetify com as cores do tema, Vulkan |
+| `40-apps` | flags do Spotify, spicetify, `Ctrl+C`/`Ctrl+V` no kitty, tema do VS Code, Vulkan |
 | `50-modulos` | clona e instala `hyde-widgets` e `hyde-ai` |
 
 ---
@@ -160,6 +160,36 @@ Vários PKGBUILDs clonam por `http://`, bloqueado em redes corporativas — o
 </details>
 
 <details>
+<summary><b>O <code>Shift+F11</code> do HyDE parece quebrado, e não é</b></summary>
+
+O bind padrão cicla **três** estados: `0` → `1` (maximizar) → `2` (fullscreen).
+Num layout de tiles o estado `1` é visualmente idêntico à janela já ladrilhada,
+então a primeira tecla não muda nada na tela — só na segunda vem o fullscreen,
+e na terceira ele sai.
+
+A etapa `20` troca por alternância direta, entra e sai numa tecla só:
+
+```lua
+hl.bind("SHIFT + F11", hl.dsp.window.fullscreen(), { ... })
+```
+
+Como o override do usuário carrega depois do HyDE e os *flags* batem, o bind é
+substituído, não duplicado.
+
+</details>
+
+<details>
+<summary><b><code>Ctrl+C</code> no terminal sem perder o SIGINT</b></summary>
+
+O kitty usa `copy_or_interrupt`, não `copy_to_clipboard`: havendo seleção,
+copia; sem seleção, manda o `SIGINT` de sempre. Mapear direto para copiar
+tiraria a função mais usada da tecla num terminal.
+
+`Ctrl+Shift+C` e `Ctrl+Shift+V` continuam valendo.
+
+</details>
+
+<details>
 <summary><b>Spotify na bandeja sem <code>--minimized</code></b></summary>
 
 O `--minimized` do Spotify **não funciona no Linux** — o próprio
@@ -190,6 +220,25 @@ dispara o `xdg-desktop-autostart` por conta própria.
 Sem isso o contexto fica no padrão de 4096, que é pouco.
 
 </details>
+
+---
+
+## O que este repositório garante — e o que não
+
+Rodar `install.sh` num Arch recém-instalado com HyDE reproduz **todas as
+configurações** desta máquina: monitor, teclado com acentuação, atalhos,
+autostart, Spotify na bandeja, kitty, VS Code, Ollama e os dois módulos. Os
+scripts são idempotentes e foram testados escrevendo num `HOME` descartável.
+
+O que **não** está sob controle deste repositório:
+
+| | |
+|---|---|
+| Versões de pacote | nada é fixado; uma instalação de hoje traz o que está nos repositórios hoje |
+| Temas do HyDE | vêm do instalador do HyDE, não daqui |
+| Chaves de API | ficam de fora de propósito — `hyde-ai --setup` pede depois |
+| Modelo do Ollama | depende de baixar alguns GB |
+| Hardware diferente | `setup.conf` precisa ser ajustado; o exemplo traz os valores desta máquina |
 
 ---
 
