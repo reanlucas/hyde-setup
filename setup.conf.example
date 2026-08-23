@@ -1,0 +1,48 @@
+# ─────────────────────────────────────────────────────────────────────────
+#  hyde-setup -- especificacoes DESTA maquina.
+#
+#  Copie para setup.conf e ajuste. Tudo aqui e especifico do hardware ou da
+#  preferencia pessoal, e por isso NAO vive nos scripts: outro setup so
+#  precisa editar este arquivo.
+# ─────────────────────────────────────────────────────────────────────────
+
+# ── Monitor ──────────────────────────────────────────────────────────────
+# Descubra os seus com:  hyprctl monitors
+MONITOR_SAIDA="DP-2"
+MONITOR_MODO="2560x1440@360"      # resolucao@taxa
+MONITOR_POSICAO="0x0"
+MONITOR_ESCALA="1.25"             # a divisao precisa dar inteiro:
+                                  # 2560/1.25 = 2048 OK, 2560/1.3 nao
+MONITOR_BITDEPTH="10"             # 10 se o painel suportar, senao 8
+MONITOR_CM="srgb"                 # srgb | hdr | auto | wide
+                                  # hdr mapeia SDR para ~80 nits e ESCURECE
+                                  # o desktop; so use com conteudo HDR real
+
+# ── Teclado ──────────────────────────────────────────────────────────────
+# us + intl      -> ' " ` ~ ^ viram dead keys; ' + c = c-cedilha
+#                   (exige o XCompose abaixo; e o jeito "Windows")
+# us + altgr-intl-> aspas normais, acentos no AltGr, AltGr+, = c-cedilha
+KB_LAYOUT="us"
+KB_VARIANT="intl"
+KB_CEDILHA_COMPOSE=1              # 1 = instala ~/.XCompose com ' + c = c-cedilha
+                                  # so faz sentido com KB_VARIANT=intl
+
+# ── GPU / LLM local ──────────────────────────────────────────────────────
+GPU_VENDOR="amd"                  # amd | nvidia | intel
+OLLAMA_PACOTE="ollama-rocm"       # ollama-rocm (AMD) | ollama (CPU/NVIDIA)
+OLLAMA_MODELO="qwen3.5:9b"        # cabe em 16 GB de VRAM com folga
+OLLAMA_CONTEXTO="32768"
+OLLAMA_KEEP_ALIVE="30m"
+
+# ── Widgets ──────────────────────────────────────────────────────────────
+WIDGETS_CAMADA="back"             # back = atras das janelas | front
+WIDGETS_TECLA="SUPER, D"          # alterna a camada
+
+# ── hyde-ai ──────────────────────────────────────────────────────────────
+HYDEAI_TECLA1="SUPER, I"
+HYDEAI_TECLA2="SUPER, dead_grave" # com KB_VARIANT=intl a tecla ` emite
+                                  # dead_grave; com us puro seria "grave"
+
+# ── Aplicativos ──────────────────────────────────────────────────────────
+SPOTIFY_TRAY=1                    # inicia minimizado na bandeja
+SPICETIFY=1                       # aplica o tema wallbash no Spotify

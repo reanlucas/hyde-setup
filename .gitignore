@@ -1,0 +1,3 @@
+setup.conf
+*.bak-*
+__pycache__/
