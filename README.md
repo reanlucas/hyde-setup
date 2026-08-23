@@ -28,6 +28,12 @@ integrações de aplicativo.
   <img src="docs/desktop.png" width="820" alt="Finished desktop after running hyde-setup: HyDE bar on top, clock and weather widgets on the left, CPU/GPU/memory panels on the right, music player and audio visualiser at the bottom">
 </div>
 
+<div align="center">
+  <img src="docs/temas.gif" width="860" alt="Three HyDE themes applied one after another; the wallpaper, the bar, the desktop widgets and the AI sidebar all recolour together, light themes included">
+  <p><em>Tudo sai do mesmo wallbash. Trocar de tema repinta a barra, os widgets e
+  a barra lateral de LLM juntos &mdash; inclusive nos temas claros.</em></p>
+</div>
+
 ---
 
 ## Instalação
