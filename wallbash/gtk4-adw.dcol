@@ -1,0 +1,8 @@
+${cacheDir}/wallbash/gtk4-adw.stamp|"$WALLBASH_SCRIPTS/gtk4-adw.py"
+# hyde-setup :: gancho da ponte GTK4/libadwaita.
+#
+# Este arquivo nao e usado por ninguem: existe so para o wallbash ter um
+# template em always/ e, ao renderiza-lo, disparar o gtk4-adw.py logo depois
+# de o HyDE ter recriado ~/.config/gtk-4.0 na troca de tema.
+#
+# tema base do wallpaper: <wallbash_pry1> / <wallbash_txt1>

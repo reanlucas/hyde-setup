@@ -50,3 +50,9 @@ SPICETIFY=1                       # aplica o tema wallbash no Spotify
 WAYBAR_ESCALA=14                  # tamanho da fonte da barra (padrao do HyDE: 10)
 KITTY_COPIA_COLA=1                # Ctrl+C / Ctrl+V no terminal
 VSCODE_WALLBASH=1                 # tema Wallbash no VS Code / VSCodium
+
+# ── Nautilus ─────────────────────────────────────────────────────────────
+NAUTILUS=1                        # instala o Files e a ponte GTK4/libadwaita
+NAUTILUS_PADRAO=1                 # vira o handler de diretorio: SUPER+E segue
+NAUTILUS_TERMINAL="kitty"         # "abrir no terminal" no menu de contexto
+                                  # (vazio = nao instala a extensao do AUR)

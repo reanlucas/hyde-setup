@@ -105,6 +105,7 @@ hyde-ai --setup         # chat API keys
 | `20-hyprland` | monitor, keyboard, keybinds, autostart and Spotify in the tray |
 | `30-teclado` | `~/.XCompose` so `'` + `c` gives ç |
 | `40-apps` | Spotify flags, spicetify, `Ctrl+C`/`Ctrl+V` in kitty, VS Code theme, waybar scale, Vulkan |
+| `45-nautilus` | Nautilus, gvfs, thumbnails, kitty in the context menu, and the GTK4 colour bridge |
 | `50-modulos` | clones and installs `hyde-widgets` and `hyde-ai` |
 
 ---
@@ -178,6 +179,46 @@ hl.bind("SHIFT + F11", hl.dsp.window.fullscreen(), { ... })
 Since the user override loads after HyDE and the *flags* match, the bind is
 replaced rather than duplicated. `SUPER + F` is bound to the same thing, for
 keyboards whose F-row sends media keysyms.
+
+</details>
+
+<details>
+<summary><b>Nautilus and the colours libadwaita can no longer find</b></summary>
+
+HyDE already themes GTK4: on a theme switch it points `~/.config/gtk-4.0` at
+`<theme>/gtk-4.0`, and GTK loads that `gtk.css` as *user* CSS, which outranks
+libadwaita's own sheet.
+
+libadwaita 1.6 moved its colours from named colours to CSS variables, but kept
+a compatibility layer — its `:root` sets `--window-bg-color: @window_bg_color`
+— so a theme's `@define-color` still reaches the variable. Nautilus therefore
+comes up almost fully themed with no help at all. I assumed the opposite until
+I measured it.
+
+The gap is in the colours the themes never declared. Of the 48 themes with a
+`gtk-4.0` directory here, **44 define none of the `@sidebar_*` family** — and
+in a file manager the sidebar is half the window, sitting in Adwaita's grey
+`#2E2E32` against a themed window. About half define **none** of the 42, and
+those drop to stock Adwaita entirely: navy `#161925` theme, Adwaita blue
+`#3584E4` accent.
+
+`wallbash/gtk4-adw.py` rebuilds `~/.config/gtk-4.0` as a real directory whose
+`gtk.css` imports the theme — everything the symlink did still happens — and
+then declares the 42 variables, each from the closest colour the theme *does*
+declare. Across the 48 themes that recovers 882 of 1008 missing values.
+
+The derived ones (`--accent-color` and friends) are deliberately left out:
+libadwaita computes them in oklab from the `*-bg-color`, and a flat colour in
+their place would only be worse.
+
+It runs as the `exec_command` of a wallbash template in `always/`, which fires
+at the end of every theme *and* wallpaper change — right after HyDE has
+recreated the symlink. If the script ever disappears, the symlink comes back on
+the next switch: what is lost is the patch, not the theme.
+
+`SUPER+E` follows on its own. HyDE's bind is `hyde-shell open --fall dolphin
+file-manager`, which opens whatever handles a directory — so setting the XDG
+handler is enough, and there is no keybind to rewrite.
 
 </details>
 
