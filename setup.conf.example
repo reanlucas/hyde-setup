@@ -56,3 +56,10 @@ NAUTILUS=1                        # instala o Files e a ponte GTK4/libadwaita
 NAUTILUS_PADRAO=1                 # vira o handler de diretorio: SUPER+E segue
 NAUTILUS_TERMINAL="kitty"         # "abrir no terminal" no menu de contexto
                                   # (vazio = nao instala a extensao do AUR)
+NAUTILUS_FLOAT=1                  # abre flutuante e centrado, como o dolphin
+NAUTILUS_MACOS=1                  # tema MacOS recolorido pelo wallbash: a
+                                  # forma do Finder com as cores do tema.
+                                  # 0 = so preenche as cores que faltam no
+                                  # tema ativo, sem mudar a forma
+NAUTILUS_ALPHA_JANELA="0.88"      # opacidade do conteudo
+NAUTILUS_ALPHA_LATERAL="0.62"     # opacidade da lateral e do cabecalho

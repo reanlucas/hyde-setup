@@ -32,28 +32,79 @@ if [ -n "${NAUTILUS_TERMINAL:-}" ] && command -v paru >/dev/null 2>&1; then
     fi
 fi
 
-echo "==> Ponte GTK4 / libadwaita"
+echo "==> Tema GTK4"
 # O HyDE ja tema o GTK4: na troca de tema ele aponta ~/.config/gtk-4.0 para
 # <tema>/gtk-4.0, e o GTK carrega esse gtk.css como CSS do usuario. O
-# libadwaita 1.6 trocou as cores nomeadas por variaveis CSS, mas deixou uma
+# libadwaita 1.6 trocou as cores nomeadas por variaveis CSS mas deixou uma
 # camada de compatibilidade (--window-bg-color: @window_bg_color), entao o
-# @define-color do tema ainda chega la: o nautilus ja nasce quase tematizado.
+# @define-color do tema ainda chega la.
 #
-# O buraco esta nas cores que os temas nunca declararam. Dos 48 temas com
-# gtk-4.0 aqui, 44 nao definem a familia @sidebar_* -- e num gerenciador de
-# arquivos a barra lateral e metade da janela, que fica no cinza do Adwaita
-# encostada numa janela tematizada. Metade dos temas nao define nenhuma das
-# 42, e ai o app inteiro cai no padrao.
+# Duas coisas nao chegam:
 #
-# O gancho abaixo roda no fim de cada troca de tema (e de wallpaper) e refaz
-# ~/.config/gtk-4.0 como diretorio de verdade: importa o gtk.css do tema, do
-# jeitinho que o symlink fazia, e preenche as 42 variaveis com a cor mais
-# proxima que o tema tenha declarado.
+#   1. as cores que os temas nunca declararam. Dos 48 temas com gtk-4.0, 44
+#      nao definem a familia @sidebar_* -- e num gerenciador de arquivos a
+#      lateral e metade da janela;
+#   2. a forma. Nenhum tema do HyDE tem o painel lateral destacado do conteudo
+#      que caracteriza o Finder.
+#
+# Com NAUTILUS_MACOS=1 a gente reescreve o tema MacOS (que tem a forma) trocando
+# as 1203 cores cravadas dele por tokens do wallbash, e entrega isso como um
+# template em always/ -- o HyDE re-renderiza a cada troca de tema. Sem ele,
+# cai no modo simples: importa o tema ativo e so preenche as 42 variaveis.
 mkdir -p "$CFG/hyde/wallbash/always" "$CFG/hyde/wallbash/scripts"
 cp -f "$BASE/wallbash/gtk4-adw.py" "$CFG/hyde/wallbash/scripts/"
 chmod +x "$CFG/hyde/wallbash/scripts/gtk4-adw.py"
-cp -f "$BASE/wallbash/gtk4-adw.dcol" "$CFG/hyde/wallbash/always/"
+
+TEMA_MACOS="${XDG_DATA_HOME:-$HOME/.local/share}/themes/MacOS"
+if [ "${NAUTILUS_MACOS:-0}" = "1" ] && [ -f "$TEMA_MACOS/gtk-4.0/gtk.gresource" ]; then
+    python3 "$BASE/wallbash/gerar-macos-dcol.py" \
+        --tema "$TEMA_MACOS" \
+        --alpha-janela "${NAUTILUS_ALPHA_JANELA:-0.88}" \
+        --alpha-lateral "${NAUTILUS_ALPHA_LATERAL:-0.62}" \
+        --saida "$CFG/hyde/wallbash/always/gtk4-macos.dcol" \
+        && rm -f "$CFG/hyde/wallbash/always/gtk4-adw.dcol"
+else
+    [ "${NAUTILUS_MACOS:-0}" = "1" ] \
+        && echo "    tema MacOS nao encontrado -- usando o modo simples"
+    cp -f "$BASE/wallbash/gtk4-adw.dcol" "$CFG/hyde/wallbash/always/"
+    rm -f "$CFG/hyde/wallbash/always/gtk4-macos.dcol"
+fi
+hyde-shell reload >/dev/null 2>&1 || true
 "$CFG/hyde/wallbash/scripts/gtk4-adw.py" || true
+
+if [ "${NAUTILUS_FLOAT:-0}" = "1" ]; then
+    echo "==> Janela flutuante"
+    # O HyDE ja faz o gerenciador de arquivos flutuar: "org.kde.dolphin" esta
+    # na lista de classes flutuantes dele. Isto so da ao nautilus o mesmo
+    # tratamento, num bloco proprio para nao depender da etapa 20.
+    LUA="$HOME/.config/hypr/hyprland.lua"
+    if [ -f "$LUA" ]; then
+        python3 - "$LUA" <<'PYLUA'
+import re, sys, pathlib
+p = pathlib.Path(sys.argv[1])
+s = re.sub(r"-- >>> hyde-setup:nautilus.*?-- <<< hyde-setup:nautilus\n?", "",
+           p.read_text(encoding="utf-8"), flags=re.S)
+bloco = """-- >>> hyde-setup:nautilus
+-- Mesmo tratamento que o HyDE ja da ao dolphin. Sem "size": o nautilus lembra
+-- o proprio tamanho, e forcar um aqui so atrapalha.
+--
+-- opacity 1 porque a transparencia vem do CSS, que distingue a lateral do
+-- conteudo. Manter tambem a opacidade global do compositor escureceria tudo
+-- por cima e apagaria essa diferenca.
+hl.window_rule({
+    name    = "nautilus-flutuante",
+    match   = { class = "^(org\\.gnome\\.Nautilus)$" },
+    float   = true,
+    center  = true,
+    opacity = 1.0,
+})
+-- <<< hyde-setup:nautilus
+"""
+p.write_text(s.rstrip() + "\n\n" + bloco, encoding="utf-8")
+PYLUA
+        hyprctl reload >/dev/null 2>&1 || true
+    fi
+fi
 
 if [ "${NAUTILUS_PADRAO:-0}" = "1" ]; then
     echo "==> Gerenciador de arquivos padrao"

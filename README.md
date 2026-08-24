@@ -105,7 +105,7 @@ hyde-ai --setup         # chat API keys
 | `20-hyprland` | monitor, keyboard, keybinds, autostart and Spotify in the tray |
 | `30-teclado` | `~/.XCompose` so `'` + `c` gives ç |
 | `40-apps` | Spotify flags, spicetify, `Ctrl+C`/`Ctrl+V` in kitty, VS Code theme, waybar scale, Vulkan |
-| `45-nautilus` | Nautilus, gvfs, thumbnails, kitty in the context menu, and the GTK4 colour bridge |
+| `45-nautilus` | Nautilus, gvfs, thumbnails, kitty in the context menu, and the MacOS theme recoloured by wallbash |
 | `50-modulos` | clones and installs `hyde-widgets` and `hyde-ai` |
 
 ---
@@ -183,42 +183,74 @@ keyboards whose F-row sends media keysyms.
 </details>
 
 <details>
-<summary><b>Nautilus and the colours libadwaita can no longer find</b></summary>
+<summary><b>Nautilus: the MacOS theme, recoloured by wallbash</b></summary>
 
 HyDE already themes GTK4: on a theme switch it points `~/.config/gtk-4.0` at
-`<theme>/gtk-4.0`, and GTK loads that `gtk.css` as *user* CSS, which outranks
-libadwaita's own sheet.
+`<theme>/gtk-4.0`, and GTK loads that `gtk.css` as *user* CSS, outranking
+libadwaita's own sheet. libadwaita 1.6 moved its colours to CSS variables but
+kept a compatibility layer — its `:root` sets `--window-bg-color:
+@window_bg_color` — so a theme's `@define-color` still reaches the variable.
+Nautilus therefore comes up almost fully themed with no help at all. I assumed
+the opposite until I measured it.
 
-libadwaita 1.6 moved its colours from named colours to CSS variables, but kept
-a compatibility layer — its `:root` sets `--window-bg-color: @window_bg_color`
-— so a theme's `@define-color` still reaches the variable. Nautilus therefore
-comes up almost fully themed with no help at all. I assumed the opposite until
-I measured it.
+Two things don't reach it:
 
-The gap is in the colours the themes never declared. Of the 48 themes with a
-`gtk-4.0` directory here, **44 define none of the `@sidebar_*` family** — and
-in a file manager the sidebar is half the window, sitting in Adwaita's grey
-`#2E2E32` against a themed window. About half define **none** of the 42, and
-those drop to stock Adwaita entirely: navy `#161925` theme, Adwaita blue
-`#3584E4` accent.
+**The colours the themes never declared.** Of the 48 themes with a `gtk-4.0`
+directory here, 44 define none of the `@sidebar_*` family — and in a file
+manager the sidebar is half the window, sitting in Adwaita's grey `#2E2E32`
+against a themed window. About half define **none** of the 42, dropping to
+stock Adwaita entirely.
 
-`wallbash/gtk4-adw.py` rebuilds `~/.config/gtk-4.0` as a real directory whose
-`gtk.css` imports the theme — everything the symlink did still happens — and
-then declares the 42 variables, each from the closest colour the theme *does*
-declare. Across the 48 themes that recovers 882 of 1008 missing values.
+**The shape.** No HyDE theme has the sidebar-pane-detached-from-content look
+that makes a Finder window read as one.
 
-The derived ones (`--accent-color` and friends) are deliberately left out:
-libadwaita computes them in oklab from the `*-bg-color`, and a flat colour in
-their place would only be worse.
+The MacOS theme has the shape, but its colours are nailed down: 1203 literals,
+including `.sidebar { background-color: #333333 }`, so redefining
+`@define-color` does nothing. `gerar-macos-dcol.py` rewrites the stylesheet
+instead, turning each literal into a wallbash token, and emits it as a template
+in `always/` — which HyDE re-renders on every theme change, like its own.
 
-It runs as the `exec_command` of a wallbash template in `always/`, which fires
-at the end of every theme *and* wallpaper change — right after HyDE has
-recreated the symlink. If the script ever disappears, the symlink comes back on
-the next switch: what is lost is the patch, not the theme.
+Each colour is classified before being replaced: greys (saturation under 12%)
+go to the group-1 ramp, the wallpaper's dominant colour; blues (hue 190–260,
+the theme's accent family) go to the group-4 ramp, HyDE's accent; red, green
+and orange are left alone, because error and success shouldn't become shades of
+the wallpaper. Position on the ramp comes from luminance *rank*, not absolute
+value, so all nine steps are used whatever palette wallbash produces. And since
+`#333333` (background) and `#373737` (hover) would land on the same step and
+become the same colour — killing the hover — each one also carries a `shade()`
+relative to its step's median.
 
-`SUPER+E` follows on its own. HyDE's bind is `hyde-shell open --fall dolphin
-file-manager`, which opens whatever handles a directory — so setting the XDG
-handler is enough, and there is no keybind to rewrite.
+Large surfaces get alpha on top: the sidebar and header at 0.62, content at
+0.88. Hyprland already blurs what is behind, and a sidebar more transparent
+than the content is what gives the panel its depth. The window rule sets
+`opacity = 1.0` for Nautilus, because leaving the compositor's global 0.90 as
+well would darken everything again and flatten that difference.
+
+The 42 libadwaita variables are declared from the same palette, since the
+MacOS port predates them. One bug of the theme's own is fixed on the way
+through: four calls to `gtkmix()`, which is not a GTK4 function — GTK dropped
+those rules with *Expected a valid color*. The output parses with zero errors,
+which the untouched theme does not.
+
+`gtk4-adw.py` runs as the template's `exec_command` and rebuilds
+`~/.config/gtk-4.0` as a real directory — right after HyDE has recreated the
+symlink. If the script ever disappears, the symlink comes back on the next
+switch: what is lost is the patch, not the theme.
+
+With `NAUTILUS_MACOS=0` the shape is left alone and only the missing colours
+are filled in, from the active theme.
+
+**A theme change recolours it; a wallpaper change does not** — not by itself.
+HyDE ships `enableWallDcol=0`, which means the wallbash palette comes from the
+theme's own `.dcol`, not from the current wallpaper. Measured: switching Rosé
+Pine → Tokyo Night moved the palette from `#584268` to `#2A2A3A` and the
+stylesheet followed; changing wallpaper inside a theme moved nothing. Set
+`enableWallDcol=1` in `~/.config/hyde/config.toml` and the wallpaper drives it
+too — for this and for everything else HyDE colours.
+
+Since the user stylesheet is global to GTK4, this is the look every GTK4 app
+gets, not only Nautilus. `GTK_THEME=<name>` does scope a theme to one app, but
+the user stylesheet outranks it, so the scoped theme loses — verified.
 
 </details>
 

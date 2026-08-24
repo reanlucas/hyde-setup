@@ -111,7 +111,36 @@ def tema_ativo() -> str:
     return nome
 
 
+CACHE = Path(os.environ.get("cacheDir") or Path.home() / ".cache/hyde") / "wallbash"
+
+
+def materializar() -> Path:
+    """~/.config/gtk-4.0 precisa ser diretorio nosso, nao o symlink do HyDE."""
+    alvo = CONF / "gtk-4.0"
+    if alvo.is_symlink():
+        alvo.unlink()
+    alvo.mkdir(parents=True, exist_ok=True)
+    return alvo
+
+
+def modo_macos() -> bool:
+    """Folha do MacOS ja recolorida pelo wallbash, se o template estiver posto."""
+    pronta = CACHE / "gtk4-macos.css"
+    if not pronta.is_file():
+        return False
+    alvo = materializar()
+    (alvo / "gtk.css").write_text(
+        f"/* {MARCA} -- gerado pelo wallbash; editar aqui nao adianta.\n"
+        "   Tema MacOS recolorido com a paleta do papel de parede. */\n\n"
+        + pronta.read_text(encoding="utf-8"),
+        encoding="utf-8")
+    print(f"gtk4-adw: MacOS + wallbash -> {alvo/'gtk.css'}")
+    return True
+
+
 def main() -> int:
+    if modo_macos():
+        return 0
     nome = tema_ativo()
     origem = TEMAS / nome / "gtk-4.0/gtk.css"
     if not origem.is_file():
