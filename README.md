@@ -220,11 +220,22 @@ value, so all nine steps are used whatever palette wallbash produces. And since
 become the same colour — killing the hover — each one also carries a `shade()`
 relative to its step's median.
 
-Large surfaces get alpha on top: the sidebar and header at 0.62, content at
-0.88. Hyprland already blurs what is behind, and a sidebar more transparent
-than the content is what gives the panel its depth. The window rule sets
-`opacity = 1.0` for Nautilus, because leaving the compositor's global 0.90 as
-well would darken everything again and flatten that difference.
+**Transparency comes from the compositor, and one HyDE rule was blocking it.**
+HyDE ships `filemanagers-fullscreen`, matching `.*Nautilus.*` with `opaque =
+true` — which makes Hyprland skip opacity *and* blur for that window. While
+that stands nothing shows through, from the compositor or from CSS alpha, and
+the same rule forces `float = false` (dolphin escapes it by being in the
+floating-class list). The window rule in stage 45 turns both off and sets
+`opacity`.
+
+Going through CSS instead does not work here, and it is worth writing down why:
+the sidebar is drawn by several nested widgets, and alpha stacks — the same
+0.62 painted on `.sidebar`, `.sidebar-pane`, `.navigation-sidebar` and
+`.sidebar list` composites to 0.98, which is opaque. Painting exactly one layer
+per region is possible, but the theme's own `.nautilus-window` rules are dead
+weight on Nautilus 50 (the class is gone), so the layer that actually paints
+has to be found by probing. The compositor route covers the whole window,
+sidebar included, in one line.
 
 The 42 libadwaita variables are declared from the same palette, since the
 MacOS port predates them. One bug of the theme's own is fixed on the way

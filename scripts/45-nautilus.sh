@@ -79,31 +79,31 @@ if [ "${NAUTILUS_FLOAT:-0}" = "1" ]; then
     # tratamento, num bloco proprio para nao depender da etapa 20.
     LUA="$HOME/.config/hypr/hyprland.lua"
     if [ -f "$LUA" ]; then
-        python3 - "$LUA" <<'PYLUA'
+        python3 - "$LUA" "${NAUTILUS_OPACIDADE:-0.82}" <<'PYLUA'
 import re, sys, pathlib
-p = pathlib.Path(sys.argv[1])
+p, op = pathlib.Path(sys.argv[1]), sys.argv[2]
 s = re.sub(r"-- >>> hyde-setup:nautilus.*?-- <<< hyde-setup:nautilus\n?", "",
            p.read_text(encoding="utf-8"), flags=re.S)
 bloco = """-- >>> hyde-setup:nautilus
--- Mesmo tratamento que o HyDE ja da ao dolphin. Sem "size": o nautilus lembra
--- o proprio tamanho, e forcar um aqui so atrapalha.
+-- O HyDE tem uma regra "filemanagers-fullscreen" que casa com .*Nautilus.* e
+-- marca opaque = true, o que faz o Hyprland pular opacidade E blur nesta
+-- janela. Enquanto isso valer, nenhuma transparencia aparece -- nem do
+-- compositor, nem alfa no CSS. Desligar o opaque e o que destrava.
 --
--- opacity 1 porque a transparencia vem do CSS, que distingue a lateral do
--- conteudo. Manter tambem a opacidade global do compositor escureceria tudo
--- por cima e apagaria essa diferenca.
+-- float pelo mesmo motivo: a regra do HyDE tambem forca float = false. O
+-- dolphin escapa porque esta na lista de classes flutuantes dela.
+--
+-- Sem "size": o nautilus lembra o proprio tamanho.
 hl.window_rule({
     name    = "nautilus-flutuante",
-    match   = { class = [[^(org\.gnome\.Nautilus)$]] },
-    -- string longa do Lua: [[...]] nao processa escapes, entao o \. do
-    -- regex chega inteiro. Com aspas normais viraria "\." -- escape
-    -- invalido em Lua -- e o Hyprland recusa o arquivo TODO, nao so
-    -- esta regra: some com todos os binds do usuario de uma vez.
+    match   = { class = [[^(org\\.gnome\\.Nautilus)$]] },
     float   = true,
     center  = true,
-    opacity = 1.0,
+    opaque  = false,
+    opacity = %s,
 })
 -- <<< hyde-setup:nautilus
-"""
+""" % op
 p.write_text(s.rstrip() + "\n\n" + bloco, encoding="utf-8")
 PYLUA
         hyprctl reload >/dev/null 2>&1 || true

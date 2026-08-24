@@ -133,44 +133,54 @@ def gerar(css: str) -> str:
 # janela na etapa 20/45), senao ela escureceria tudo por cima e apagaria a
 # diferenca entre lateral e conteudo.
 def raiz(a_janela: float, a_lateral: float) -> str:
-    # o conteudo e pintado POR CIMA da janela, entao o alfa dele nao e o
-    # desejado e sim o que, composto sobre a lateral, chega la
+    """Bloco de cor: as 42 variaveis do libadwaita mais a camada translucida.
+
+    A transparencia so funciona se UMA camada por regiao for pintada. A
+    primeira versao daqui pintava a mesma cor em .sidebar, .sidebar-pane,
+    .navigation-sidebar, .sidebar list e mais duas -- e como elas se aninham,
+    0.62 empilhado quatro vezes da 0.98: opaco. O desenho certo e este:
+
+      janela  -> pintada com o alfa da lateral; e ela que aparece ali
+      lateral -> transparente de ponta a ponta, deixa a janela passar
+      conteudo-> uma unica camada, com o alfa compensado para que, sobre a
+                 janela, o composto de exatamente o alfa pedido
+    """
     conteudo = 1.0 if a_lateral >= 0.999 else max(0.0, min(1.0,
         1 - (1 - a_janela) / (1 - a_lateral)))
     j, l, c = f"{a_janela:g}", f"{a_lateral:g}", f"{conteudo:.3f}"
     return f"""
 :root {{
-  --window-bg-color: alpha(#<wallbash_pry1>, {j});
+  --window-bg-color: alpha(#<wallbash_pry1>, {l});
   --window-fg-color: #<wallbash_txt1>;
-  --view-bg-color: alpha(#<wallbash_1xa1>, {j});
+  --view-bg-color: alpha(#<wallbash_1xa1>, {c});
   --view-fg-color: #<wallbash_txt1>;
-  --headerbar-bg-color: alpha(#<wallbash_1xa2>, {l});
+  --headerbar-bg-color: transparent;
   --headerbar-fg-color: #<wallbash_txt1>;
   --headerbar-border-color: #<wallbash_1xa4>;
-  --headerbar-backdrop-color: alpha(#<wallbash_1xa1>, {j});
-  --headerbar-shade-color: alpha(#<wallbash_1xa1>, 0.5);
-  --headerbar-darker-shade-color: alpha(#<wallbash_1xa1>, 0.7);
-  --sidebar-bg-color: alpha(#<wallbash_pry1>, {l});
+  --headerbar-backdrop-color: transparent;
+  --headerbar-shade-color: alpha(#<wallbash_1xa1>, 0.4);
+  --headerbar-darker-shade-color: alpha(#<wallbash_1xa1>, 0.6);
+  --sidebar-bg-color: transparent;
   --sidebar-fg-color: #<wallbash_txt1>;
-  --sidebar-backdrop-color: alpha(#<wallbash_1xa1>, {l});
+  --sidebar-backdrop-color: transparent;
   --sidebar-border-color: #<wallbash_1xa4>;
-  --sidebar-shade-color: alpha(#<wallbash_1xa1>, 0.5);
-  --secondary-sidebar-bg-color: alpha(#<wallbash_1xa2>, {l});
+  --sidebar-shade-color: alpha(#<wallbash_1xa1>, 0.4);
+  --secondary-sidebar-bg-color: transparent;
   --secondary-sidebar-fg-color: #<wallbash_txt1>;
-  --secondary-sidebar-backdrop-color: alpha(#<wallbash_1xa1>, {l});
+  --secondary-sidebar-backdrop-color: transparent;
   --secondary-sidebar-border-color: #<wallbash_1xa4>;
-  --secondary-sidebar-shade-color: alpha(#<wallbash_1xa1>, 0.5);
+  --secondary-sidebar-shade-color: alpha(#<wallbash_1xa1>, 0.4);
   --card-bg-color: alpha(#<wallbash_1xa2>, {j});
   --card-fg-color: #<wallbash_txt1>;
-  --card-shade-color: alpha(#<wallbash_1xa1>, 0.5);
+  --card-shade-color: alpha(#<wallbash_1xa1>, 0.4);
   --dialog-bg-color: alpha(#<wallbash_1xa2>, {j});
   --dialog-fg-color: #<wallbash_txt1>;
   --popover-bg-color: alpha(#<wallbash_1xa2>, {j});
   --popover-fg-color: #<wallbash_txt1>;
-  --popover-shade-color: alpha(#<wallbash_1xa1>, 0.5);
+  --popover-shade-color: alpha(#<wallbash_1xa1>, 0.4);
   --thumbnail-bg-color: alpha(#<wallbash_1xa3>, {j});
   --thumbnail-fg-color: #<wallbash_txt1>;
-  --shade-color: alpha(#<wallbash_1xa1>, 0.5);
+  --shade-color: alpha(#<wallbash_1xa1>, 0.4);
   --scrollbar-outline-color: #<wallbash_1xa4>;
   --accent-bg-color: #<wallbash_4xa9>;
   --accent-fg-color: #<wallbash_4xa1>;
@@ -184,54 +194,39 @@ def raiz(a_janela: float, a_lateral: float) -> str:
   --error-fg-color: #<wallbash_2xa1>;
 }}
 
-/* O tema MacOS pinta estas superficies com hexadecimal cravado, entao as
-   variaveis acima nao alcancam: e preciso repetir aqui, depois dele. */
+/* 1. a janela: a unica camada translucida embaixo de tudo */
 window.background,
-window.background .content-pane,
-.view, gridview, listview, columnview {{
-  background-color: alpha(#<wallbash_1xa1>, {j});
-}}
-.sidebar, .sidebar-pane, .navigation-sidebar,
-.sidebar-pane .navigation-sidebar,
-.sidebar list, .sidebar-pane scrolledwindow {{
+window.background:backdrop {{
   background-color: alpha(#<wallbash_pry1>, {l});
-}}
-headerbar, .titlebar, headerbar.titlebar {{
-  background-color: alpha(#<wallbash_1xa2>, {l});
 }}
 
-/* O nautilus e um caso a parte, e o tema tem regras proprias para ele com
-   especificidade maior que as de cima. A estrutura e esta: a janela inteira
-   e pintada, a lateral e TRANSPARENTE e deixa a janela aparecer, e o conteudo
-   e uma camada por cima. Logo o alfa da lateral vai na janela, e o conteudo
-   leva um alfa menor -- {c} -- para que empilhado sobre {l} o resultado
-   composto de exatamente {j}. Repetindo os mesmos seletores do tema, depois
-   dele, para ganhar no desempate. */
-.nautilus-window.background.csd,
-.nautilus-window.background.csd:backdrop {{
-  background-color: alpha(#<wallbash_pry1>, {l});
-}}
-.nautilus-window .sidebar-pane,
-.nautilus-window .sidebar-pane:backdrop,
-.nautilus-window flap.unfolded placessidebar,
-.nautilus-window .sidebar-pane placessidebar {{
+/* 2. a lateral inteira sem pintura propria, do painel ate a lista -- e o que
+      faz a transparencia valer para o menu lateral todo, e nao so para uma
+      faixa. Cada um destes que pintasse somaria alfa com os de cima. */
+.sidebar, .sidebar-pane, .navigation-sidebar,
+.sidebar-pane .navigation-sidebar, .sidebar list, .sidebar list row,
+.sidebar-pane scrolledwindow, .sidebar-pane viewport,
+placessidebar, placessidebar > viewport.frame,
+.content-pane .sidebar-pane, .sidebar-pane .content-pane,
+.sidebar-pane banner > revealer > widget {{
   background-color: transparent;
+  background-image: none;
 }}
-.nautilus-window .nautilus-grid-view,
-.nautilus-window .nautilus-list-view,
-.nautilus-window tabbar:not(.inline) .box {{
-  background-color: alpha(#<wallbash_1xa2>, {c});
-}}
-/* O cabecalho repete a divisao lateral/conteudo com um gradiente: os
-   primeiros 240px sao transparentes (a lateral), 1px de divisor, e o resto
-   acompanha o conteudo. */
-.nautilus-window.background.csd:not(.view) headerbar,
-.nautilus-window.background.csd:not(.view) headerbar:backdrop {{
+
+/* 3. o conteudo: uma camada so, com o alfa compensado ({c} sobre {l} = {j}) */
+.content-pane, .content-pane scrolledwindow, .content-pane viewport {{
   background-color: transparent;
-  background-image: linear-gradient(90deg,
-      transparent 240px,
-      #<wallbash_1xa4> 240px, #<wallbash_1xa4> 241px,
-      alpha(#<wallbash_1xa2>, {c}) 241px);
+  background-image: none;
+}}
+.view, listview.view, gridview, columnview {{
+  background-color: alpha(#<wallbash_1xa1>, {c});
+}}
+
+/* 4. cabecalho e barras sem fundo: quem aparece atras e a janela */
+headerbar, .titlebar, headerbar.titlebar, headerbar:backdrop,
+.toolbar, tabbar:not(.inline) .box, .top-bar {{
+  background-color: transparent;
+  background-image: none;
 }}
 """
 
@@ -241,9 +236,9 @@ def main():
     ap.add_argument("--tema", default=str(Path.home() / ".local/share/themes/MacOS"))
     ap.add_argument("--saida", required=True)
     ap.add_argument("--variante", default="gtk-dark.css")
-    ap.add_argument("--alpha-janela", type=float, default=0.88,
+    ap.add_argument("--alpha-janela", type=float, default=1.0,
                     help="opacidade do conteudo e da janela (0..1)")
-    ap.add_argument("--alpha-lateral", type=float, default=0.62,
+    ap.add_argument("--alpha-lateral", type=float, default=1.0,
                     help="opacidade da barra lateral e do cabecalho")
     a = ap.parse_args()
 

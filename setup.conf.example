@@ -61,5 +61,7 @@ NAUTILUS_MACOS=1                  # tema MacOS recolorido pelo wallbash: a
                                   # forma do Finder com as cores do tema.
                                   # 0 = so preenche as cores que faltam no
                                   # tema ativo, sem mudar a forma
-NAUTILUS_ALPHA_JANELA="0.88"      # opacidade do conteudo
-NAUTILUS_ALPHA_LATERAL="0.62"     # opacidade da lateral e do cabecalho
+NAUTILUS_OPACIDADE="0.82"         # transparencia da janela (com blur).
+                                  # E do compositor: o HyDE marca o
+                                  # nautilus como opaque, e a regra da
+                                  # etapa 45 desfaz isso
