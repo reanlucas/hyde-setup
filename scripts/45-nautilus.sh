@@ -93,7 +93,11 @@ bloco = """-- >>> hyde-setup:nautilus
 -- por cima e apagaria essa diferenca.
 hl.window_rule({
     name    = "nautilus-flutuante",
-    match   = { class = "^(org\\.gnome\\.Nautilus)$" },
+    match   = { class = [[^(org\.gnome\.Nautilus)$]] },
+    -- string longa do Lua: [[...]] nao processa escapes, entao o \. do
+    -- regex chega inteiro. Com aspas normais viraria "\." -- escape
+    -- invalido em Lua -- e o Hyprland recusa o arquivo TODO, nao so
+    -- esta regra: some com todos os binds do usuario de uma vez.
     float   = true,
     center  = true,
     opacity = 1.0,

@@ -133,7 +133,11 @@ def gerar(css: str) -> str:
 # janela na etapa 20/45), senao ela escureceria tudo por cima e apagaria a
 # diferenca entre lateral e conteudo.
 def raiz(a_janela: float, a_lateral: float) -> str:
-    j, l = f"{a_janela:g}", f"{a_lateral:g}"
+    # o conteudo e pintado POR CIMA da janela, entao o alfa dele nao e o
+    # desejado e sim o que, composto sobre a lateral, chega la
+    conteudo = 1.0 if a_lateral >= 0.999 else max(0.0, min(1.0,
+        1 - (1 - a_janela) / (1 - a_lateral)))
+    j, l, c = f"{a_janela:g}", f"{a_lateral:g}", f"{conteudo:.3f}"
     return f"""
 :root {{
   --window-bg-color: alpha(#<wallbash_pry1>, {j});
@@ -194,6 +198,40 @@ window.background .content-pane,
 }}
 headerbar, .titlebar, headerbar.titlebar {{
   background-color: alpha(#<wallbash_1xa2>, {l});
+}}
+
+/* O nautilus e um caso a parte, e o tema tem regras proprias para ele com
+   especificidade maior que as de cima. A estrutura e esta: a janela inteira
+   e pintada, a lateral e TRANSPARENTE e deixa a janela aparecer, e o conteudo
+   e uma camada por cima. Logo o alfa da lateral vai na janela, e o conteudo
+   leva um alfa menor -- {c} -- para que empilhado sobre {l} o resultado
+   composto de exatamente {j}. Repetindo os mesmos seletores do tema, depois
+   dele, para ganhar no desempate. */
+.nautilus-window.background.csd,
+.nautilus-window.background.csd:backdrop {{
+  background-color: alpha(#<wallbash_pry1>, {l});
+}}
+.nautilus-window .sidebar-pane,
+.nautilus-window .sidebar-pane:backdrop,
+.nautilus-window flap.unfolded placessidebar,
+.nautilus-window .sidebar-pane placessidebar {{
+  background-color: transparent;
+}}
+.nautilus-window .nautilus-grid-view,
+.nautilus-window .nautilus-list-view,
+.nautilus-window tabbar:not(.inline) .box {{
+  background-color: alpha(#<wallbash_1xa2>, {c});
+}}
+/* O cabecalho repete a divisao lateral/conteudo com um gradiente: os
+   primeiros 240px sao transparentes (a lateral), 1px de divisor, e o resto
+   acompanha o conteudo. */
+.nautilus-window.background.csd:not(.view) headerbar,
+.nautilus-window.background.csd:not(.view) headerbar:backdrop {{
+  background-color: transparent;
+  background-image: linear-gradient(90deg,
+      transparent 240px,
+      #<wallbash_1xa4> 240px, #<wallbash_1xa4> 241px,
+      alpha(#<wallbash_1xa2>, {c}) 241px);
 }}
 """
 
