@@ -228,18 +228,18 @@ the same rule forces `float = false` (dolphin escapes it by being in the
 floating-class list). The window rule in stage 45 turns both off and sets
 `opacity`.
 
-It is uniform across the window, and that is a real limit, not a choice.
-Making only the sidebar see-through would mean CSS alpha, and **CSS alpha never
-reaches the compositor here**: GTK declares the surface's opaque region from
-what it believes the window background to be, and inside that region the
-compositor ignores per-pixel alpha entirely. Measured every way — alpha on
-`window.background`, on `toolbarview`, on the sidebar classes, even resetting
-every container to `transparent` and repainting one layer — the sidebar pixels
-never moved with what was behind them. Compositor opacity always did. Two other
-things surfaced on the way and are worth knowing: the theme's `.nautilus-window`
-rules are dead weight on Nautilus 50, which no longer uses that class; and alpha
-painted on nested widgets stacks, so the same 0.62 on `.sidebar`,
-`.sidebar-pane`, `.navigation-sidebar` and `.sidebar list` composites to 0.98.
+It is uniform across the window. Making **only** the sidebar see-through is
+what I could not do, and the honest record of it is: the sidebar renders
+byte-identical over two completely different wallpapers, so it is fully opaque,
+and none of the CSS routes changed that — alpha on `window.background`, on
+`toolbarview`, on every sidebar class and their `:backdrop` twins, repeating the
+theme's own high-specificity selectors to win on position, even resetting every
+container and repainting one layer at a time. Two things did come out of the
+search and are worth keeping: the theme's `.nautilus-window` rules are dead
+weight on Nautilus 50, which no longer uses that class; and alpha painted on
+nested widgets stacks, so the same 0.62 on `.sidebar`, `.sidebar-pane`,
+`.navigation-sidebar` and `.sidebar list` composites to 0.98. Compositor opacity
+is the lever that works, and it takes the whole window.
 
 The 42 libadwaita variables are declared from the same palette, since the
 MacOS port predates them. One bug of the theme's own is fixed on the way

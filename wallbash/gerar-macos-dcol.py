@@ -207,7 +207,15 @@ window.background:backdrop {{
 .sidebar-pane scrolledwindow, .sidebar-pane viewport,
 placessidebar, placessidebar > viewport.frame,
 .content-pane .sidebar-pane, .sidebar-pane .content-pane,
-.sidebar-pane banner > revealer > widget {{
+.sidebar-pane banner > revealer > widget,
+/* as variantes :backdrop tem especificidade maior que as simples: sem
+   repeti-las aqui, a janela sem foco volta a pintar a lateral opaca -- foi
+   exatamente o que segurou a transparencia por varias tentativas */
+.sidebar:backdrop, .sidebar-pane:backdrop, .navigation-sidebar:backdrop,
+.sidebar-pane .navigation-sidebar:backdrop, .sidebar list:backdrop,
+.sidebar-pane scrolledwindow:backdrop, .sidebar-pane viewport:backdrop,
+placessidebar:backdrop, .content-pane .sidebar-pane:backdrop,
+.sidebar-pane .content-pane:backdrop {{
   background-color: transparent;
   background-image: none;
 }}
