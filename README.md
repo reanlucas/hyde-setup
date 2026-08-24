@@ -228,14 +228,18 @@ the same rule forces `float = false` (dolphin escapes it by being in the
 floating-class list). The window rule in stage 45 turns both off and sets
 `opacity`.
 
-Going through CSS instead does not work here, and it is worth writing down why:
-the sidebar is drawn by several nested widgets, and alpha stacks — the same
-0.62 painted on `.sidebar`, `.sidebar-pane`, `.navigation-sidebar` and
-`.sidebar list` composites to 0.98, which is opaque. Painting exactly one layer
-per region is possible, but the theme's own `.nautilus-window` rules are dead
-weight on Nautilus 50 (the class is gone), so the layer that actually paints
-has to be found by probing. The compositor route covers the whole window,
-sidebar included, in one line.
+It is uniform across the window, and that is a real limit, not a choice.
+Making only the sidebar see-through would mean CSS alpha, and **CSS alpha never
+reaches the compositor here**: GTK declares the surface's opaque region from
+what it believes the window background to be, and inside that region the
+compositor ignores per-pixel alpha entirely. Measured every way — alpha on
+`window.background`, on `toolbarview`, on the sidebar classes, even resetting
+every container to `transparent` and repainting one layer — the sidebar pixels
+never moved with what was behind them. Compositor opacity always did. Two other
+things surfaced on the way and are worth knowing: the theme's `.nautilus-window`
+rules are dead weight on Nautilus 50, which no longer uses that class; and alpha
+painted on nested widgets stacks, so the same 0.62 on `.sidebar`,
+`.sidebar-pane`, `.navigation-sidebar` and `.sidebar list` composites to 0.98.
 
 The 42 libadwaita variables are declared from the same palette, since the
 MacOS port predates them. One bug of the theme's own is fixed on the way

@@ -132,7 +132,7 @@ def gerar(css: str) -> str:
 # do macOS. A opacidade do compositor fica em 1 para o nautilus (regra de
 # janela na etapa 20/45), senao ela escureceria tudo por cima e apagaria a
 # diferenca entre lateral e conteudo.
-def raiz(a_janela: float, a_lateral: float) -> str:
+def raiz(a_janela: float, a_lateral: float, a_cabecalho: float) -> str:
     """Bloco de cor: as 42 variaveis do libadwaita mais a camada translucida.
 
     A transparencia so funciona se UMA camada por regiao for pintada. A
@@ -140,21 +140,20 @@ def raiz(a_janela: float, a_lateral: float) -> str:
     .navigation-sidebar, .sidebar list e mais duas -- e como elas se aninham,
     0.62 empilhado quatro vezes da 0.98: opaco. O desenho certo e este:
 
-      janela  -> pintada com o alfa da lateral; e ela que aparece ali
+      janela  -> pintada com o alfa da LATERAL; e ela que aparece ali, entao
+                 e este numero que deixa o menu lateral transparente
       lateral -> transparente de ponta a ponta, deixa a janela passar
-      conteudo-> uma unica camada, com o alfa compensado para que, sobre a
-                 janela, o composto de exatamente o alfa pedido
+      conteudo-> uma unica camada, com o proprio alfa, por cima da janela
+      cabecalho -> idem; sem fundo proprio herdaria a lateral e sumiria
     """
-    conteudo = 1.0 if a_lateral >= 0.999 else max(0.0, min(1.0,
-        1 - (1 - a_janela) / (1 - a_lateral)))
-    j, l, c = f"{a_janela:g}", f"{a_lateral:g}", f"{conteudo:.3f}"
+    j, l, h = f"{a_janela:g}", f"{a_lateral:g}", f"{a_cabecalho:g}"
     return f"""
 :root {{
   --window-bg-color: alpha(#<wallbash_pry1>, {l});
   --window-fg-color: #<wallbash_txt1>;
-  --view-bg-color: alpha(#<wallbash_1xa1>, {c});
+  --view-bg-color: alpha(#<wallbash_1xa1>, {j});
   --view-fg-color: #<wallbash_txt1>;
-  --headerbar-bg-color: transparent;
+  --headerbar-bg-color: alpha(#<wallbash_1xa2>, {h});
   --headerbar-fg-color: #<wallbash_txt1>;
   --headerbar-border-color: #<wallbash_1xa4>;
   --headerbar-backdrop-color: transparent;
@@ -213,19 +212,20 @@ placessidebar, placessidebar > viewport.frame,
   background-image: none;
 }}
 
-/* 3. o conteudo: uma camada so, com o alfa compensado ({c} sobre {l} = {j}) */
+/* 3. o conteudo: uma camada so, opaca o bastante para nao herdar a
+      transparencia da lateral que esta por baixo */
 .content-pane, .content-pane scrolledwindow, .content-pane viewport {{
   background-color: transparent;
   background-image: none;
 }}
 .view, listview.view, gridview, columnview {{
-  background-color: alpha(#<wallbash_1xa1>, {c});
+  background-color: alpha(#<wallbash_1xa1>, {j});
 }}
 
-/* 4. cabecalho e barras sem fundo: quem aparece atras e a janela */
+/* 4. cabecalho: fundo proprio, senao herdaria a lateral e ficaria ilegivel */
 headerbar, .titlebar, headerbar.titlebar, headerbar:backdrop,
 .toolbar, tabbar:not(.inline) .box, .top-bar {{
-  background-color: transparent;
+  background-color: alpha(#<wallbash_1xa2>, {h});
   background-image: none;
 }}
 """
@@ -237,9 +237,11 @@ def main():
     ap.add_argument("--saida", required=True)
     ap.add_argument("--variante", default="gtk-dark.css")
     ap.add_argument("--alpha-janela", type=float, default=1.0,
-                    help="opacidade do conteudo e da janela (0..1)")
+                    help="opacidade do conteudo (0..1)")
     ap.add_argument("--alpha-lateral", type=float, default=1.0,
-                    help="opacidade da barra lateral e do cabecalho")
+                    help="opacidade da barra lateral")
+    ap.add_argument("--alpha-cabecalho", type=float, default=1.0,
+                    help="opacidade do cabecalho")
     a = ap.parse_args()
 
     gres = Path(a.tema) / "gtk-4.0/gtk.gresource"
@@ -254,7 +256,7 @@ def main():
                                       Gio.ResourceLookupFlags.NONE)
     css = dados.get_data().decode("utf-8", "replace")
 
-    corpo = gerar(css) + "\n" + raiz(a.alpha_janela, a.alpha_lateral)
+    corpo = gerar(css) + "\n" + raiz(a.alpha_janela, a.alpha_lateral, a.alpha_cabecalho)
     cabeca = ('${cacheDir}/wallbash/gtk4-macos.css|"$WALLBASH_SCRIPTS/gtk4-adw.py"\n'
               f"/* Gerado por gerar-macos-dcol.py a partir de {a.tema}/gtk-4.0"
               f" ({a.variante}).\n"
