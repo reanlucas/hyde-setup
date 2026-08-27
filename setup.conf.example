@@ -33,6 +33,8 @@ OLLAMA_PACOTE="ollama-rocm"       # ollama-rocm (AMD) | ollama (CPU/NVIDIA)
 OLLAMA_MODELO="qwen3.5:9b"        # cabe em 16 GB de VRAM com folga
 OLLAMA_CONTEXTO="32768"
 OLLAMA_KEEP_ALIVE="30m"
+GPU_LACT="1"                      # 60-gpu: LACT (tensao/clock/fan da GPU
+                                  # AMD) + amdgpu.ppfeaturemask na cmdline
 
 # ── Widgets ──────────────────────────────────────────────────────────────
 WIDGETS_CAMADA="back"             # back = atras das janelas | front

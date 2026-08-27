@@ -108,6 +108,7 @@ hyde-ai --setup         # checks the chat's Hypr-IA backend
 | `40-apps` | Spotify flags, spicetify, `Ctrl+C`/`Ctrl+V` in kitty, VS Code theme, waybar scale, Vulkan |
 | `45-nautilus` | Nautilus, gvfs, thumbnails, kitty in the context menu, and the MacOS theme recoloured by wallbash |
 | `50-modulos` | clones and installs `hyde-widgets`, `hyde-ai` and its backend, `hypr-ia` |
+| `60-gpu` | AMD GPU control: LACT (power cap, fan curve, voltage — the Adrenalin-tuning equivalent) + `amdgpu.ppfeaturemask` on the kernel cmdline |
 
 ---
 
