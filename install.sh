@@ -43,5 +43,6 @@ done
 echo
 echo "════ Pronto ════"
 echo "  hyde-widgets --show     widgets do desktop"
-echo "  hyde-ai --setup         chaves de API do chat"
+echo "  hyde-ai --setup         confere o backend Hermes do chat"
+echo "                          (chaves: /key no painel, ou ~/.hermes/.env)"
 echo "  ${HYDEAI_TECLA1}  abre o chat   ·   ${WIDGETS_TECLA}  alterna os widgets"

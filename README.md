@@ -92,7 +92,8 @@ stage:
 
 ```bash
 hyde-widgets --show     # desktop widgets
-hyde-ai --setup         # chat API keys
+hyde-ai --setup         # checks the chat's Hermes backend
+                        # (API keys: /key in the panel, or ~/.hermes/.env)
 ```
 
 ---
@@ -106,7 +107,7 @@ hyde-ai --setup         # chat API keys
 | `30-teclado` | `~/.XCompose` so `'` + `c` gives ç |
 | `40-apps` | Spotify flags, spicetify, `Ctrl+C`/`Ctrl+V` in kitty, VS Code theme, waybar scale, Vulkan |
 | `45-nautilus` | Nautilus, gvfs, thumbnails, kitty in the context menu, and the MacOS theme recoloured by wallbash |
-| `50-modulos` | clones and installs `hyde-widgets` and `hyde-ai` |
+| `50-modulos` | clones and installs `hyde-widgets`, `hyde-ai` and its backend, `hermes-agent` |
 
 ---
 
@@ -327,7 +328,7 @@ What is **not** under this repository's control:
 |---|---|
 | Package versions | nothing is pinned; installing today gets what the repos hold today |
 | HyDE themes | they come from HyDE's installer, not from here |
-| API keys | deliberately left out — `hyde-ai --setup` asks later |
+| API keys | deliberately left out — they live with Hermes (`/key` in the panel, or `~/.hermes/.env`) |
 | The Ollama model | a few GB of download |
 | Different hardware | `setup.conf` needs editing; the example carries this machine's values |
 
