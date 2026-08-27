@@ -43,10 +43,10 @@ FULLSCREEN_TECLA="SHIFT, F11"     # alternancia direta, sem o ciclo de 3 estados
 HYDEAI_TECLA1="SUPER, I"
 HYDEAI_TECLA2="SUPER, dead_grave" # com KB_VARIANT=intl a tecla ` emite
                                   # dead_grave; com us puro seria "grave"
-HERMES_DIR="$HOME/Projetos/hermes-agent"  # backend do hyde-ai: checkout do
-                                  # hermes-agent (50-modulos clona se faltar;
-                                  # o venv Python 3.11 e criado pelo install
-                                  # do hyde-ai, via uv)
+HYPRIA_DIR="$HOME/Projetos/hypr-ia" # backend do hyde-ai: checkout do
+                                  # hypr-ia (50-modulos clona a base se
+                                  # faltar; o venv Python 3.11 e criado
+                                  # pelo install do hyde-ai, via uv)
 
 # ── Aplicativos ──────────────────────────────────────────────────────────
 SPOTIFY_TRAY=1                    # sobe com a sessao, direto no scratchpad (SUPER+S mostra)

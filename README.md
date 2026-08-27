@@ -92,8 +92,8 @@ stage:
 
 ```bash
 hyde-widgets --show     # desktop widgets
-hyde-ai --setup         # checks the chat's Hermes backend
-                        # (API keys: /key in the panel, or ~/.hermes/.env)
+hyde-ai --setup         # checks the chat's Hypr-IA backend
+                        # (API keys: /key in the panel, or ~/.hypr-ia/.env)
 ```
 
 ---
@@ -107,7 +107,7 @@ hyde-ai --setup         # checks the chat's Hermes backend
 | `30-teclado` | `~/.XCompose` so `'` + `c` gives ç |
 | `40-apps` | Spotify flags, spicetify, `Ctrl+C`/`Ctrl+V` in kitty, VS Code theme, waybar scale, Vulkan |
 | `45-nautilus` | Nautilus, gvfs, thumbnails, kitty in the context menu, and the MacOS theme recoloured by wallbash |
-| `50-modulos` | clones and installs `hyde-widgets`, `hyde-ai` and its backend, `hermes-agent` |
+| `50-modulos` | clones and installs `hyde-widgets`, `hyde-ai` and its backend, `hypr-ia` |
 
 ---
 
@@ -328,7 +328,7 @@ What is **not** under this repository's control:
 |---|---|
 | Package versions | nothing is pinned; installing today gets what the repos hold today |
 | HyDE themes | they come from HyDE's installer, not from here |
-| API keys | deliberately left out — they live with Hermes (`/key` in the panel, or `~/.hermes/.env`) |
+| API keys | deliberately left out — they live with Hypr-IA (`/key` in the panel, or `~/.hypr-ia/.env`) |
 | The Ollama model | a few GB of download |
 | Different hardware | `setup.conf` needs editing; the example carries this machine's values |
 
