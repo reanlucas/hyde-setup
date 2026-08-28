@@ -108,7 +108,33 @@ hyde-ai --setup         # checks the chat's Hypr-IA backend
 | `40-apps` | Spotify flags, spicetify, `Ctrl+C`/`Ctrl+V` in kitty, VS Code theme, waybar scale, Vulkan |
 | `45-nautilus` | Nautilus, gvfs, thumbnails, kitty in the context menu, and the MacOS theme recoloured by wallbash |
 | `50-modulos` | clones and installs `hyde-widgets`, `hyde-ai` and its backend, `hypr-ia` |
+| `55-energia` | never lock or suspend on idle; the screen alone goes off |
 | `60-gpu` | AMD GPU control: LACT (power cap, fan curve, voltage — the Adrenalin-tuning equivalent) + `amdgpu.ppfeaturemask` on the kernel cmdline |
+
+<details>
+<summary><strong>Idle: the screen goes off, the machine does not</strong></summary>
+
+HyDE ships four `hypridle` listeners: dim at 60s, `loginctl lock-session` at
+120s, DPMS off at 300s, `systemctl suspend` at 500s. Stage 55 rewrites that
+section and keeps only the DPMS one. The lock and suspend listeners are not
+pushed out to a large timeout -- they are simply not written, so there is no
+value to wait out.
+
+What stays is the `general` block, with `lock_cmd` and `unlock_cmd` intact:
+manual locking (`loginctl lock-session`, and HyDE's bind) still works. The
+change is about the automatic triggers only.
+
+`systemd-logind` has an idle action of its own, so the stage also drops
+`/etc/systemd/logind.conf.d/90-hyde-setup-energia.conf` with
+`IdleAction=ignore`. The default already is `ignore`, but writing it down
+means a systemd update cannot reintroduce a suspend from behind.
+
+The rewrite is idempotent in both directions: it strips its own delimited
+block *and* every `listener` block it finds, so if a HyDE update restores the
+stock file, running the stage again cleans it out. `~/.config/hypr/hypridle.conf`
+is backed up with a timestamp on each run.
+
+</details>
 
 ---
 

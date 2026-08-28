@@ -71,3 +71,14 @@ NAUTILUS_OPACIDADE="0.75"         # transparencia da janela (com blur).
                                   # E do compositor: o HyDE marca o
                                   # nautilus como opaque, e a regra da
                                   # etapa 45 desfaz isso
+
+# ── Energia / ociosidade ─────────────────────────────────────────────────
+# A maquina nunca bloqueia nem suspende sozinha -- isso e fixo na etapa 55,
+# que simplesmente nao escreve esses listeners. O bloqueio manual continua
+# valendo (SUPER + L / loginctl lock-session). O que da para ajustar e a tela:
+ENERGIA_TELA=1                    # 1 = apaga a tela por inatividade (DPMS off).
+                                  # O sistema segue rodando: download, build,
+                                  # player e ssh nao param junto
+ENERGIA_TELA_SEGUNDOS=300         # quanto tempo parado antes de apagar
+ENERGIA_DIM=0                     # 1 = escurece a tela antes de apagar
+ENERGIA_DIM_SEGUNDOS=60
