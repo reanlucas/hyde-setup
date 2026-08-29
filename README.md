@@ -110,6 +110,7 @@ hyde-ai --setup         # checks the chat's Hypr-IA backend
 | `50-modulos` | clones and installs `hyde-widgets`, `hyde-ai` and its backend, `hypr-ia` |
 | `55-energia` | never lock or suspend on idle; the screen alone goes off |
 | `60-gpu` | AMD GPU control: LACT (power cap, fan curve, voltage — the Adrenalin-tuning equivalent) + `amdgpu.ppfeaturemask` on the kernel cmdline |
+| `65-jogos` | CS2 and friends: real fullscreen, direct scanout, tearing allowed |
 
 <details>
 <summary><strong>Idle: the screen goes off, the machine does not</strong></summary>
@@ -133,6 +134,65 @@ The rewrite is idempotent in both directions: it strips its own delimited
 block *and* every `listener` block it finds, so if a HyDE update restores the
 stock file, running the stage again cleans it out. `~/.config/hypr/hypridle.conf`
 is backed up with a timestamp on each run.
+
+</details>
+
+
+<details>
+<summary><strong>CS2 has no "Fullscreen" option, and that is not a bug</strong></summary>
+
+The display-mode dropdown offers only Windowed and Fullscreen Windowed. The
+reason is in Valve's own launcher, `game/cs2.sh`:
+
+```sh
+# There is Wayland support in SDL but a recent (7/30/2025) attempt at
+# allowing SDL to default to Wayland caused a number of customer issues so
+# keep the default at X11 for now.
+if [ -z "$SDL_VIDEO_DRIVER" ]; then
+    export SDL_VIDEO_DRIVER=x11
+fi
+```
+
+So CS2 is an X client on XWayland, and XWayland cannot change the display
+mode — `xrandr` says so itself the moment you run it against one. Exclusive
+fullscreen *is* a mode change, so there is nothing for the option to do.
+Fullscreen Windowed is the correct mode here.
+
+What was missing is the borderless window behaving like the exclusive one.
+Stage 65 writes a window rule that does exactly that:
+
+- `fullscreen` — the window covers the screen, waybar included. Once it is
+  fullscreen and alone on its workspace, Hyprland hands the game's buffer
+  straight to the display (direct scanout, `hyprctl monitors` calls it
+  `solitary`), skipping composition entirely. That is what exclusive
+  fullscreen buys you, and here it comes from the compositor.
+- `content = "game"` + `immediate`, with `general.allow_tearing` on — real
+  vsync-off tearing, which is the point on a high-refresh panel.
+- `idle_inhibit = "fullscreen"` — covers the gap stage 55 opens: with the
+  screen set to blank on idle, standing still on a bombsite would black out
+  the monitor.
+- `no_blur` / `no_anim` / `no_shadow` / `no_dim` / `rounding 0` /
+  `border_size 0` — no compositor work on a surface that is about to be
+  scanned out.
+
+The rule keys were checked one by one against the live compositor with
+`hyprctl eval 'hl.window_rule({...})'` rather than guessed: `no_rounding` and
+`no_border` are layer-rule-only and are rejected for windows, which is why the
+rule uses `rounding = 0` and `border_size = 0`. Hyprland refuses the *whole*
+config file when the Lua does not compile — taking every keybind with it — so
+the stage backs the file up, reloads, checks `hyprctl configerrors`, and
+restores the backup if anything came back.
+
+If you specifically want the in-game option back rather than the effect,
+`gamescope` is the way: it is a nested compositor with a real display of its
+own, so the game can modeset inside it. As a Steam launch option:
+
+```
+gamescope -W 2560 -H 1440 -r 360 -f -- %command%
+```
+
+That is not the default here — it adds a compositing step in front of a path
+whose whole point is not having one.
 
 </details>
 

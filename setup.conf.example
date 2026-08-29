@@ -82,3 +82,15 @@ ENERGIA_TELA=1                    # 1 = apaga a tela por inatividade (DPMS off).
 ENERGIA_TELA_SEGUNDOS=300         # quanto tempo parado antes de apagar
 ENERGIA_DIM=0                     # 1 = escurece a tela antes de apagar
 ENERGIA_DIM_SEGUNDOS=60
+
+# ── Jogos ────────────────────────────────────────────────────────────────
+# Em Wayland nao existe fullscreen exclusivo para cliente X (o CS2 roda em
+# XWayland por decisao da propria Valve). A etapa 65 nao devolve a opcao no
+# menu -- ela faz o Fullscreen Windowed render igual ao exclusivo.
+JOGOS=1
+JOGOS_CLASSES="cs2"               # regex das classes tratadas como jogo.
+                                  # Descubra a sua com: hyprctl clients
+JOGOS_FULLSCREEN=1                # forca a janela em fullscreen ao abrir,
+                                  # o que destrava o direct scanout
+JOGOS_TEARING=1                   # allow_tearing + immediate: vsync off de
+                                  # verdade. 0 se preferir sem tearing
