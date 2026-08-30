@@ -6,6 +6,9 @@
 #  precisa editar este arquivo.
 # ─────────────────────────────────────────────────────────────────────────
 
+# ── Horario ──────────────────────────────────────────────────────────────
+TIMEZONE="America/Sao_Paulo"
+
 # ── Monitor ──────────────────────────────────────────────────────────────
 # Descubra os seus com:  hyprctl monitors
 MONITOR_SAIDA="DP-2"

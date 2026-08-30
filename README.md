@@ -103,6 +103,7 @@ hyde-ai --doctor        # checks the Hypr-IA backend and its Ollama venv
 
 | Stage | Contents |
 |---|---|
+| `05-horario` | sets the configured system timezone and enables NTP synchronization |
 | `10-pacotes` | tooling, `ollama` tuned for the GPU, first model |
 | `15-hyde-assets` | every active HyDE extra and every theme in the supported gallery |
 | `20-hyprland` | monitor, keyboard, keybinds, autostart and Spotify in the tray |
