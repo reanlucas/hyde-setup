@@ -81,6 +81,12 @@ instalar_temas() {
     fi
 
     instalar_galeria() {
+        # Todos os repositorios do catalogo sao publicos. Se uma entrada virou
+        # 404/privada, Git tenta pedir usuario e senha mesmo que credenciais nao
+        # possam resolver; desativar prompts permite classifica-la e continuar.
+        export GIT_TERMINAL_PROMPT=0
+        export GCM_INTERACTIVE=Never
+
         command -v curl >/dev/null 2>&1 || {
             echo "ERRO: curl nao encontrado para baixar o catalogo de temas" >&2
             return 1
@@ -150,7 +156,33 @@ PY
         temas_dir="${XDG_CONFIG_HOME:-$HOME/.config}/hyde/themes"
         mkdir -p "$temas_dir"
         instalados=0
-        local -a falhas=()
+        local -a indisponiveis=() incompativeis=()
+
+        reparar_tema_upstream() {
+            local nome="$1" cache arquivo repo arc cursor
+            [ "$nome" = "Nightbrew" ] || return 1
+            cursor="${XDG_DATA_HOME:-$HOME/.local/share}/icons/Bibata-Modern-Ice"
+            [ -d "$cursor" ] || return 1
+            cache="${XDG_CACHE_HOME:-$HOME/.cache}/hyde/themepatcher"
+            arquivo="$(find "$cache" -type f \
+                -path '*/Configs/.config/hyde/themes/Nightbrew/hypr.theme' \
+                -print -quit 2>/dev/null)"
+            [ -n "$arquivo" ] || return 1
+            grep -Eq '^[[:space:]]*\$CURSOR[-_]THEME[[:space:]]*=' "$arquivo" \
+                || return 1
+            grep -q 'Bibata-Modern-Ice' "$arquivo" || return 1
+            repo="${arquivo%%/Configs/.config/hyde/themes/*}"
+            arc="$repo/Source/arcs/Cursor_Bibata-Modern-Ice.tar.gz"
+            if [ ! -f "$arc" ]; then
+                mkdir -p "$(dirname "$arc")"
+                if ! tar -czf "$arc" -C "$(dirname "$cursor")" "$(basename "$cursor")"; then
+                    rm -f "$arc"
+                    return 1
+                fi
+                echo "    compatibilidade Nightbrew: cursor padrao reaproveitado"
+            fi
+        }
+
         while IFS=$'\t' read -r tema link; do
             if [ -s "$temas_dir/$tema/hypr.theme" ]; then
                 instalados=$((instalados + 1))
@@ -159,23 +191,32 @@ PY
 
             link_branch="$link"
             if [[ "$link" != */tree/* ]]; then
-                branch="$(git ls-remote --symref "${link%/}" HEAD 2>/dev/null \
-                    | awk '$1 == "ref:" && $3 == "HEAD" {sub("refs/heads/", "", $2); print $2; exit}')"
+                if ! branch="$(git ls-remote --symref "${link%/}" HEAD 2>/dev/null \
+                    | awk '$1 == "ref:" && $3 == "HEAD" {sub("refs/heads/", "", $2); print $2; exit}')"; then
+                    branch=""
+                fi
                 if [ -z "$branch" ]; then
-                    echo "    FALHA: nao foi possivel descobrir a branch de $tema" >&2
-                    falhas+=("$tema")
+                    echo "    INDISPONIVEL no GitHub: $tema ($link)" >&2
+                    indisponiveis+=("$tema")
                     continue
                 fi
                 link_branch="${link%/}/tree/$branch"
             fi
 
             echo "    [$((instalados + 1))/$total] instalando $tema"
+            # Em uma repeticao apos a primeira tentativa, o checkout ja esta
+            # no cache e podemos corrigir Nightbrew antes de chamar o patcher.
+            [ "$tema" != "Nightbrew" ] || reparar_tema_upstream "$tema" || true
             if "$THEME_PATCHER" "$tema" "$link_branch" --skipcaching \
                && [ -s "$temas_dir/$tema/hypr.theme" ]; then
                 instalados=$((instalados + 1))
+            elif reparar_tema_upstream "$tema" \
+                 && "$THEME_PATCHER" "$tema" "$link_branch" --skipcaching \
+                 && [ -s "$temas_dir/$tema/hypr.theme" ]; then
+                instalados=$((instalados + 1))
             else
-                echo "    FALHA: $tema" >&2
-                falhas+=("$tema")
+                echo "    INCOMPATIVEL com o HyDE atual: $tema" >&2
+                incompativeis+=("$tema")
             fi
         done <"$entradas"
         rm -f "$entradas"
@@ -186,12 +227,24 @@ PY
             echo "ERRO: hyde-shell nao encontrado para recarregar os temas" >&2
             return 1
         fi
-        if [ ${#falhas[@]} -gt 0 ] || [ "$instalados" -ne "$total" ]; then
-            printf 'ERRO: galeria incompleta (%s/%s); falharam: %s\n' \
-                "$instalados" "$total" "${falhas[*]}" >&2
+        [ "$instalados" -gt "$minimo" ] || {
+            echo "ERRO: apenas $instalados temas utilizaveis foram instalados" >&2
             return 1
+        }
+        local ignorados=$(( ${#indisponiveis[@]} + ${#incompativeis[@]} ))
+        if [ "$ignorados" -gt 0 ]; then
+            echo "    galeria utilizavel: $instalados/$total temas instalados"
+            [ ${#indisponiveis[@]} -eq 0 ] \
+                || printf '    indisponiveis no upstream: %s\n' "${indisponiveis[*]}"
+            [ ${#incompativeis[@]} -eq 0 ] \
+                || printf '    incompativeis no upstream: %s\n' "${incompativeis[*]}"
+            if [ "${HYDE_TEMAS_ESTRITO:-0}" = "1" ]; then
+                echo "ERRO: HYDE_TEMAS_ESTRITO=1 e o upstream tem entradas quebradas" >&2
+                return 1
+            fi
+        else
+            echo "    galeria completa: $instalados/$total temas instalados"
         fi
-        echo "    galeria completa: $instalados/$total temas instalados"
     }
 
     case "${HYDE_TEMAS:-galeria}" in

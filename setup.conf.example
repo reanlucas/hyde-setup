@@ -46,6 +46,7 @@ HYDE_EXTRAS=1                       # instala todas as entradas de pkg_extra.lst
 HYDE_TEMAS="galeria"               # galeria = todos os temas suportados pelo HyDE
                                   # "oficiais" legado tambem instala todos; 0 = nao instala
 HYDE_TEMAS_MINIMO=50                # falha se o catalogo vier truncado/antigo
+HYDE_TEMAS_ESTRITO=0                # 1 = falha se tema de terceiros sumir/quebrar
 
 # ── Widgets ──────────────────────────────────────────────────────────────
 WIDGETS_CAMADA="back"             # back = atras das janelas | front
