@@ -13,6 +13,7 @@ HYDE_DIR="$WORK/HyDE"
 HYDE_EXTRAS=1
 HYDE_TEMAS="galeria"
 HYDE_TEMAS_MINIMO=2
+HYDE_TEMAS_CATALOGO_URL="file://$WORK/catalog.json"
 EOF
 cat >"$WORK/HyDE/Scripts/pkg_extra.lst" <<'EOF'
 foo
@@ -38,25 +39,17 @@ cat >"$WORK/bin/sudo" <<'EOF'
 #!/usr/bin/env bash
 exec "$@"
 EOF
-cat >"$WORK/bin/hydectl" <<'EOF'
-#!/usr/bin/env bash
-printf '%s\n' "$*" >>"$ASSET_TEST_LOG"
-[ "${render_failures:-}" = "0" ] || exit 20
-[ -f "$XDG_STATE_HOME/hyde/hyprland.conf" ] || exit 21
-if [ "$*" = "theme import --json" ]; then
-    cat <<'JSON'
+cat >"$WORK/catalog.json" <<'JSON'
 [
   {"THEME": "Um", "LINK": "https://github.com/test/um"},
   {"THEME": "Dois", "LINK": "https://github.com/test/dois/tree/stable"},
   {"THEME": "Tres", "LINK": "https://github.com/test/tres"}
 ]
 JSON
-    exit 0
-fi
-exit 22
-EOF
 cat >"$WORK/bin/theme.patch.sh" <<'EOF'
 #!/usr/bin/env bash
+[ "${render_failures:-}" = "0" ] || exit 20
+[ -f "$XDG_STATE_HOME/hyde/hyprland.conf" ] || exit 21
 printf 'patch\t%s\t%s\t%s\n' "$1" "$2" "$3" >>"$ASSET_TEST_LOG"
 mkdir -p "$XDG_CONFIG_HOME/hyde/themes/$1"
 printf '# theme\n' >"$XDG_CONFIG_HOME/hyde/themes/$1/hypr.theme"
@@ -84,7 +77,6 @@ chmod +x "$WORK/HyDE/Scripts/install_pkg.sh" "$WORK/bin/"*
 ASSET_TEST_LOG="$WORK/calls.log" \
 HOME="$WORK/home" \
 HYDE_SETUP_CONF="$WORK/setup.conf" \
-HYDECTL="$WORK/bin/hydectl" \
 HYDE_THEME_PATCHER="$WORK/bin/theme.patch.sh" \
 XDG_CONFIG_HOME="$WORK/config" \
 XDG_STATE_HOME="$WORK/state" \
@@ -92,7 +84,6 @@ PATH="$WORK/bin:$PATH" \
 bash "$BASE/scripts/15-hyde-assets.sh"
 
 grep -Fq -- "$WORK/HyDE/Scripts/pkg_extra.lst" "$WORK/calls.log"
-grep -Fxq -- 'theme import --json' "$WORK/calls.log"
 grep -Fq $'patch\tUm\thttps://github.com/test/um/tree/main\t--skipcaching' "$WORK/calls.log"
 grep -Fq $'patch\tDois\thttps://github.com/test/dois/tree/stable\t--skipcaching' "$WORK/calls.log"
 grep -Fxq $'hyde-shell\treload' "$WORK/calls.log"
@@ -106,13 +97,11 @@ sed -i 's/HYDE_TEMAS="galeria"/HYDE_TEMAS="oficiais"/' "$WORK/setup.conf"
 ASSET_TEST_LOG="$WORK/calls.log" \
 HOME="$WORK/home" \
 HYDE_SETUP_CONF="$WORK/setup.conf" \
-HYDECTL="$WORK/bin/hydectl" \
 HYDE_THEME_PATCHER="$WORK/bin/theme.patch.sh" \
 XDG_CONFIG_HOME="$WORK/config" \
 XDG_STATE_HOME="$WORK/state" \
 PATH="$WORK/bin:$PATH" \
 bash "$BASE/scripts/15-hyde-assets.sh"
-grep -Fxq -- 'theme import --json' "$WORK/calls.log"
 grep -Fxq $'hyde-shell\treload' "$WORK/calls.log"
 
 # Um catalogo no limite minimo e tratado como truncado, nunca como sucesso.
@@ -120,13 +109,27 @@ sed -i 's/HYDE_TEMAS_MINIMO=2/HYDE_TEMAS_MINIMO=3/' "$WORK/setup.conf"
 if ASSET_TEST_LOG="$WORK/calls.log" \
    HOME="$WORK/home" \
    HYDE_SETUP_CONF="$WORK/setup.conf" \
-   HYDECTL="$WORK/bin/hydectl" \
    HYDE_THEME_PATCHER="$WORK/bin/theme.patch.sh" \
    XDG_CONFIG_HOME="$WORK/config" \
    XDG_STATE_HOME="$WORK/state" \
    PATH="$WORK/bin:$PATH" \
    bash "$BASE/scripts/15-hyde-assets.sh"; then
     echo "catalogo truncado foi aceito" >&2
+    exit 1
+fi
+
+# Reproduz o caso real: o provedor do catalogo devolve sucesso, mas zero bytes.
+: >"$WORK/catalog.json"
+sed -i 's/HYDE_TEMAS_MINIMO=3/HYDE_TEMAS_MINIMO=2/' "$WORK/setup.conf"
+if ASSET_TEST_LOG="$WORK/calls.log" \
+   HOME="$WORK/home" \
+   HYDE_SETUP_CONF="$WORK/setup.conf" \
+   HYDE_THEME_PATCHER="$WORK/bin/theme.patch.sh" \
+   XDG_CONFIG_HOME="$WORK/config" \
+   XDG_STATE_HOME="$WORK/state" \
+   PATH="$WORK/bin:$PATH" \
+   bash "$BASE/scripts/15-hyde-assets.sh"; then
+    echo "catalogo vazio foi aceito" >&2
     exit 1
 fi
 

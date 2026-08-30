@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Instala todo o catalogo de temas suportados pelo HyDE e todos os extras.
 # O catalogo e mantido pelo proprio HyDE. O `--fetch all` do hydectl apenas
-# atualiza temas ja instalados; para uma maquina nova precisamos percorrer o
-# JSON da galeria e aplicar cada entrada explicitamente.
+# atualiza temas ja instalados, e algumas versoes misturam logs com a saida de
+# `--json`; baixamos o JSON oficial diretamente e aplicamos cada entrada.
 set -euo pipefail
 
 CONF="${HYDE_SETUP_CONF:-$(dirname "${BASH_SOURCE[0]}")/../setup.conf}"
@@ -10,9 +10,9 @@ CONF="${HYDE_SETUP_CONF:-$(dirname "${BASH_SOURCE[0]}")/../setup.conf}"
 . "$CONF"
 
 HYDE_DIR="${HYDE_DIR:-$HOME/HyDE}"
-HYDECTL="${HYDECTL:-$HOME/.local/bin/hydectl}"
 EXTRAS_LIST="$HYDE_DIR/Scripts/pkg_extra.lst"
 THEME_PATCHER="${HYDE_THEME_PATCHER:-$HOME/.local/lib/hyde/theme.patch.sh}"
+CATALOGO_URL="${HYDE_TEMAS_CATALOGO_URL:-https://raw.githubusercontent.com/HyDE-Project/hyde-gallery/master/hyde-themes.json}"
 
 [ -x "$HYDE_DIR/Scripts/install_pkg.sh" ] || {
     echo "ERRO: HyDE nao encontrado em $HYDE_DIR" >&2
@@ -81,9 +81,8 @@ instalar_temas() {
     fi
 
     instalar_galeria() {
-        [ -x "$HYDECTL" ] || HYDECTL="$(command -v hydectl || true)"
-        [ -n "$HYDECTL" ] && [ -x "$HYDECTL" ] || {
-            echo "ERRO: hydectl nao encontrado; restaure o HyDE antes dos temas" >&2
+        command -v curl >/dev/null 2>&1 || {
+            echo "ERRO: curl nao encontrado para baixar o catalogo de temas" >&2
             return 1
         }
         [ -x "$THEME_PATCHER" ] || THEME_PATCHER="$(command -v theme.patch.sh || true)"
@@ -95,8 +94,9 @@ instalar_temas() {
         local catalogo entradas
         catalogo="$(mktemp)"
         entradas="$(mktemp)"
-        if ! "$HYDECTL" theme import --json >"$catalogo"; then
-            echo "ERRO: nao foi possivel baixar o catalogo de temas do HyDE" >&2
+        if ! curl -fsSL --retry 3 --retry-all-errors --connect-timeout 15 \
+             --max-time 120 "$CATALOGO_URL" -o "$catalogo"; then
+            echo "ERRO: nao foi possivel baixar $CATALOGO_URL" >&2
             rm -f "$catalogo" "$entradas"
             return 1
         fi
@@ -104,8 +104,11 @@ instalar_temas() {
 import json
 import sys
 
-with open(sys.argv[1], encoding="utf-8") as arquivo:
-    catalogo = json.load(arquivo)
+try:
+    with open(sys.argv[1], encoding="utf-8") as arquivo:
+        catalogo = json.load(arquivo)
+except (OSError, json.JSONDecodeError) as erro:
+    raise SystemExit("JSON ausente ou invalido: %s" % erro)
 if not isinstance(catalogo, list) or not catalogo:
     raise SystemExit("catalogo vazio ou invalido")
 vistos = set()
