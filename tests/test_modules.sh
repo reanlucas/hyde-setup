@@ -24,7 +24,7 @@ printf 'install $repo\n' >>"\$MODULE_TEST_LOG"
 if [ "$repo" = "hyde-widgets" ]; then
     mkdir -p "\${XDG_CONFIG_HOME:-\$HOME/.config}/waybar" \
         "\$HOME/.local/lib/hyde-widgets"
-    printf '{"modules-center":["group/hyde-spotify"]}\n' \
+    printf '{"modules-center":[]}\n' \
         >"\${XDG_CONFIG_HOME:-\$HOME/.config}/waybar/config.jsonc"
     touch "\$HOME/.local/lib/hyde-widgets/waybar-player"
     chmod +x "\$HOME/.local/lib/hyde-widgets/waybar-player"
@@ -32,6 +32,22 @@ fi
 EOF
     chmod +x "$WORK/src/$repo/install.sh"
 done
+
+mkdir -p "$WORK/src/hyde-widgets/waybar"
+cat >"$WORK/src/hyde-widgets/waybar/instalar.py" <<'PY'
+import json, os
+CASA = os.path.expanduser("~")
+MODULOS = os.path.join(os.path.dirname(__file__), "modules.json")
+def carregar(caminho):
+    with open(caminho, encoding="utf-8") as arquivo:
+        return json.load(arquivo)
+def injetar(cfg, modulos):
+    cfg.update(modulos)
+    cfg["modules-center"].append("group/hyde-spotify")
+    return True
+PY
+printf '{"group/hyde-spotify":{"modules":[]}}\n' \
+    >"$WORK/src/hyde-widgets/waybar/modules.json"
 
 cat >"$WORK/home/.local/bin/hyde-ai" <<'EOF'
 #!/usr/bin/env bash

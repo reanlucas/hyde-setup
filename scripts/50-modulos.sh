@@ -34,6 +34,7 @@ export HYDE_AI_HYPRIA_DIR="$HYPRIA"
 
 for repo in hyde-widgets hyde-ai; do
     alvo="$DEST/$repo"
+    [ "$repo" = "hyde-widgets" ] && HYDE_WIDGETS="$alvo"
     if [ -d "$alvo/.git" ]; then
         echo "==> Atualizando $repo"
         git -C "$alvo" pull --ff-only
@@ -53,6 +54,17 @@ if [ "${SPOTIFY_TRAY:-0}" = "1" ]; then
         echo "    ERRO: configuracao ativa do Waybar nao existe: $waybar_cfg" >&2
         exit 1
     }
+    # O hyde-widgets injeta o grupo nos layouts da galeria. O config ativo,
+    # porem, pode ser um layout personalizado (ou um config que o HyDE marcou
+    # como "unknown") e nesse caso nao e copia de nenhum deles. Injete-o
+    # tambem, usando a mesma implementacao e os mesmos modulos do widget.
+    if ! grep -Fq 'group/hyde-spotify' "$waybar_cfg"; then
+        python3 "$BASE/scripts/injetar-waybar-spotify.py" \
+            "$HYDE_WIDGETS/waybar/instalar.py" "$waybar_cfg"
+        echo "    Waybar: widget injetado tambem no layout ativo"
+        unidade="hyde-${XDG_SESSION_DESKTOP:-Hyprland}-bar.service"
+        systemctl --user restart "$unidade" >/dev/null 2>&1 || true
+    fi
     grep -Fq 'group/hyde-spotify' "$waybar_cfg" || {
         echo "    ERRO: widget do Spotify nao entrou na configuracao ativa do Waybar" >&2
         exit 1
