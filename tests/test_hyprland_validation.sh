@@ -30,17 +30,20 @@ FULLSCREEN_TECLA="SHIFT, F11"
 SPOTIFY_TRAY=0
 EOF
 
+# Aspas e dois-pontos sao texto, nao devem quebrar a geracao de Lua.
+sed "s|^MONITOR_SAIDA=.*|MONITOR_SAIDA='DP-2\" : literal'|" \
+    "$WORK/valid.conf" >"$WORK/quoted.conf"
 XDG_CONFIG_HOME="$WORK/config" PATH="$WORK/bin:$PATH" \
-HYDE_SETUP_CONF="$WORK/valid.conf" bash "$BASE/scripts/20-hyprland.sh"
+HYDE_SETUP_CONF="$WORK/quoted.conf" bash "$BASE/scripts/20-hyprland.sh"
 luac -p "$WORK/config/hypr/hyprland.lua"
 cp "$WORK/config/hypr/hyprland.lua" "$WORK/after-valid.lua"
 
-# O valor e valido para o shell, mas a aspa e os dois-pontos geram Lua invalido.
-sed "s|^MONITOR_SAIDA=.*|MONITOR_SAIDA='DP-2\" : invalido'|" \
+# Valores numericos sao validados e o arquivo anterior permanece intacto.
+sed 's/^MONITOR_ESCALA=.*/MONITOR_ESCALA="1.25; invalido"/' \
     "$WORK/valid.conf" >"$WORK/invalid.conf"
 if XDG_CONFIG_HOME="$WORK/config" PATH="$WORK/bin:$PATH" \
    HYDE_SETUP_CONF="$WORK/invalid.conf" bash "$BASE/scripts/20-hyprland.sh"; then
-    echo "a etapa aceitou Lua invalido" >&2
+    echo "a etapa aceitou numero invalido" >&2
     exit 1
 fi
 cmp -s "$WORK/after-valid.lua" "$WORK/config/hypr/hyprland.lua"

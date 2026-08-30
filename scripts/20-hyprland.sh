@@ -17,6 +17,45 @@ FIM="-- <<< hyde-setup"
 BAK="$ALVO.bak-$(date +%Y%m%d-%H%M%S)"
 cp "$ALVO" "$BAK"
 
+# setup.conf e shell, mas o destino e Lua. Nunca interpole valores textuais
+# diretamente no codigo: uma aspa em nome de monitor, tecla ou variante pode
+# fechar a string e transformar o restante em Lua invalido (ou em codigo).
+lua_quote() {
+    python3 - "$1" <<'PY'
+import json
+import sys
+
+# JSON usa o mesmo escape basico de strings que Lua e ensure_ascii evita \uXXXX,
+# que nao e uma sequencia Lua valida para caracteres UTF-8 comuns.
+print(json.dumps(sys.argv[1], ensure_ascii=False))
+PY
+}
+numero() {
+    local nome="$1" valor="$2"
+    [[ "$valor" =~ ^[0-9]+([.][0-9]+)?$ ]] || {
+        echo "ERRO: $nome deve ser numerico (recebido: $valor)" >&2
+        return 1
+    }
+}
+
+MONITOR_SAIDA_LUA="$(lua_quote "$MONITOR_SAIDA")"
+MONITOR_MODO_LUA="$(lua_quote "$MONITOR_MODO")"
+MONITOR_POSICAO_LUA="$(lua_quote "$MONITOR_POSICAO")"
+MONITOR_CM_LUA="$(lua_quote "$MONITOR_CM")"
+KB_LAYOUT_LUA="$(lua_quote "$KB_LAYOUT")"
+KB_VARIANT_LUA="$(lua_quote "$KB_VARIANT")"
+HYDEAI_TECLA1_LUA="$(lua_quote "${HYDEAI_TECLA1/, / + }")"
+HYDEAI_TECLA2_LUA="$(lua_quote "${HYDEAI_TECLA2/, / + }")"
+WIDGETS_TECLA_LUA="$(lua_quote "${WIDGETS_TECLA/, / + }")"
+FULLSCREEN_TECLA_LUA="$(lua_quote "${FULLSCREEN_TECLA/, / + }")"
+if ! numero MONITOR_ESCALA "$MONITOR_ESCALA" \
+   || ! numero MONITOR_BITDEPTH "$MONITOR_BITDEPTH"; then
+    cp "$BAK" "$ALVO"
+    exit 1
+fi
+MONITOR_ESCALA_LUA="$MONITOR_ESCALA"
+MONITOR_BITDEPTH_LUA="$MONITOR_BITDEPTH"
+
 # remove um bloco anterior, para o script ser idempotente
 python3 - "$ALVO" "$INI" "$FIM" <<'PY'
 import sys, re
@@ -55,28 +94,28 @@ $INI
 -- Gerado por hyde-setup. Editar setup.conf e rodar de novo reescreve isto.
 
 hl.monitor({
-    output   = "${MONITOR_SAIDA}",
-    mode     = "${MONITOR_MODO}",
-    position = "${MONITOR_POSICAO}",
-    scale    = ${MONITOR_ESCALA},
-    bitdepth = ${MONITOR_BITDEPTH},
-    cm       = "${MONITOR_CM}",
+    output   = ${MONITOR_SAIDA_LUA},
+    mode     = ${MONITOR_MODO_LUA},
+    position = ${MONITOR_POSICAO_LUA},
+    scale    = ${MONITOR_ESCALA_LUA},
+    bitdepth = ${MONITOR_BITDEPTH_LUA},
+    cm       = ${MONITOR_CM_LUA},
 })
 
 hl.config({
     input = {
-        kb_layout  = "${KB_LAYOUT}",
-        kb_variant = "${KB_VARIANT}",
+        kb_layout  = ${KB_LAYOUT_LUA},
+        kb_variant = ${KB_VARIANT_LUA},
     },
 })
 
-hl.bind("${HYDEAI_TECLA1/, / + }", hl.dsp.exec_cmd("\$HOME/.local/bin/hyde-ai --toggle"), {
+hl.bind(${HYDEAI_TECLA1_LUA}, hl.dsp.exec_cmd("\$HOME/.local/bin/hyde-ai --toggle"), {
     description = "[Launcher|Apps] AI sidebar",
 })
-hl.bind("${HYDEAI_TECLA2/, / + }", hl.dsp.exec_cmd("\$HOME/.local/bin/hyde-ai --toggle"), {
+hl.bind(${HYDEAI_TECLA2_LUA}, hl.dsp.exec_cmd("\$HOME/.local/bin/hyde-ai --toggle"), {
     description = "[Launcher|Apps] AI sidebar",
 })
-hl.bind("${WIDGETS_TECLA/, / + }", hl.dsp.exec_cmd("\$HOME/.local/bin/hyde-widgets --toggle"), {
+hl.bind(${WIDGETS_TECLA_LUA}, hl.dsp.exec_cmd("\$HOME/.local/bin/hyde-widgets --toggle"), {
     description = "[Launcher|Apps] widgets do desktop",
 })
 
@@ -87,7 +126,7 @@ hl.layer_rule({ "blur", "ignorealpha 0.2" }, "hyde-widgets")
 -- Num layout de tiles o estado 1 e visualmente identico a janela ja
 -- ladrilhada, entao a primeira tecla nao muda nada na tela e o atalho parece
 -- quebrado -- so na segunda vem o fullscreen. Aqui vira alternancia direta.
-hl.bind("${FULLSCREEN_TECLA/, / + }", hl.dsp.window.fullscreen(), {
+hl.bind(${FULLSCREEN_TECLA_LUA}, hl.dsp.window.fullscreen(), {
     description = "[Window Management] toggle fullscreen",
 })
 ${SPOTIFY_LUA}
