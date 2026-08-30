@@ -37,6 +37,7 @@ CORECTRL=1                          # 60-corectrl: unico controlador AMD
 CORECTRL_START_DELAY=5              # espera a bandeja da waybar antes de subir
 CORECTRL_RESTORE_PROFILE=1          # restaura o perfil desta RX 7900 XT
                                   # (255 W, -60 mV); use 0 em outra GPU
+CORECTRL_POLKIT=1                   # evita popup no login; regra limitada a este usuario
 # CORECTRL_CMDLINE="/etc/kernel/cmdline" # UKI mkinitcpio; mude apenas se seu
                                           # bootloader mantiver a cmdline em outro lugar
 

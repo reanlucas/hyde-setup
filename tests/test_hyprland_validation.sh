@@ -7,7 +7,20 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
 mkdir -p "$WORK/bin" "$WORK/config/hypr"
-printf '%s\n' '-- configuracao anterior valida' >"$WORK/config/hypr/hyprland.lua"
+cat >"$WORK/config/hypr/hyprland.lua" <<'EOF'
+-- configuracao anterior valida
+
+-- >>> hyde-setup:nautilus
+hl.window_rule({ name = "nautilus-test", match = { class = "Nautilus" } })
+-- <<< hyde-setup:nautilus
+
+-- ── Spotify na bandeja ────────────────────────────────────────────────
+hl.on("hyprland.start", function()
+    hl.exec_cmd("spotify --ozone-platform=wayland")
+end)
+
+-- ── Fullscreen ────────────────────────────────────────────────────────
+EOF
 cat >"$WORK/bin/hyprctl" <<'EOF'
 #!/usr/bin/env bash
 exit 0
@@ -36,6 +49,15 @@ sed "s|^MONITOR_SAIDA=.*|MONITOR_SAIDA='DP-2\" : literal'|" \
 XDG_CONFIG_HOME="$WORK/config" PATH="$WORK/bin:$PATH" \
 HYDE_SETUP_CONF="$WORK/quoted.conf" bash "$BASE/scripts/20-hyprland.sh"
 luac -p "$WORK/config/hypr/hyprland.lua"
+grep -Fq -- '-- >>> hyde-setup:nautilus' "$WORK/config/hypr/hyprland.lua"
+grep -Fq 'nautilus-test' "$WORK/config/hypr/hyprland.lua"
+grep -Fq '$HOME/.local/bin/hyde-spotify --background' \
+    "$WORK/config/hypr/hyprland.lua"
+if grep -Fq 'hl.exec_cmd("spotify --ozone-platform=wayland")' \
+   "$WORK/config/hypr/hyprland.lua"; then
+    echo "autostart Spotify legado nao foi removido" >&2
+    exit 1
+fi
 cp "$WORK/config/hypr/hyprland.lua" "$WORK/after-valid.lua"
 
 # Valores numericos sao validados e o arquivo anterior permanece intacto.

@@ -41,8 +41,20 @@ import sys
 alvo, ini, fim = sys.argv[1], sys.argv[2], sys.argv[3]
 with open(alvo, encoding="utf-8") as arquivo:
     conteudo = arquivo.read()
+# Os marcadores precisam casar a linha inteira. Sem as ancoras, o marcador
+# geral `hyde-setup` tambem casava o prefixo de `hyde-setup:nautilus`, jogos e
+# CoreCtrl; sobrava uma linha `:nautilus`, que e o erro Lua "symbol near ':'".
 conteudo = re.sub(
-    re.escape(ini) + r".*?" + re.escape(fim) + r"\n?",
+    r"^" + re.escape(ini) + r"[ \t]*$.*?^" + re.escape(fim) + r"[ \t]*$\n?",
+    "",
+    conteudo,
+    flags=re.S | re.M,
+)
+# Migracao das primeiras versoes do setup, que escreveram um segundo bloco
+# Spotify sem marcador. Mantê-lo iniciaria o cliente direto e, logo depois, o
+# launcher gerenciado -- exatamente a corrida que tornava o login intermitente.
+conteudo = re.sub(
+    r"\n?-- [─-]+ Spotify na bandeja [─-]+\n.*?(?=\n-- [─-]+ Fullscreen)",
     "",
     conteudo,
     flags=re.S,
@@ -150,7 +162,7 @@ hl.window_rule({
 })
 '
     SPOTIFY_EXEC='
-    hl.exec_cmd("spotify --ozone-platform=wayland")'
+    hl.exec_cmd("$HOME/.local/bin/hyde-spotify --background")'
 fi
 
 cat >> "$TMP" <<LUA

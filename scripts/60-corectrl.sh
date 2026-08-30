@@ -27,6 +27,47 @@ DELAY="${CORECTRL_START_DELAY:-5}"
 echo "==> CoreCtrl"
 sudo pacman -S --needed --noconfirm corectrl
 
+configurar_polkit() {
+    [ "${CORECTRL_POLKIT:-1}" = "1" ] || {
+        echo "    regra Polkit desativada por CORECTRL_POLKIT=0"
+        return 0
+    }
+
+    local usuario regra temporario
+    usuario="$(id -un)"
+    regra="${CORECTRL_POLKIT_RULE:-/etc/polkit-1/rules.d/90-corectrl-hyde-setup.rules}"
+    temporario="$(mktemp)"
+    trap 'rm -f "$temporario"' RETURN
+
+    # CoreCtrl documenta estas duas acoes para evitar o prompt a cada login.
+    # Restringimos ainda mais que o exemplo por grupo: apenas o usuario que
+    # executou o setup, numa sessao local e ativa, recebe a autorizacao.
+    python3 - "$usuario" "$temporario" <<'PY'
+import json
+import pathlib
+import sys
+
+user, target = sys.argv[1:]
+quoted = json.dumps(user)
+pathlib.Path(target).write_text(f'''// Gerado por hyde-setup (etapa 60).
+polkit.addRule(function(action, subject) {{
+    if ((action.id == "org.corectrl.helper.init" ||
+         action.id == "org.corectrl.helperkiller.init") &&
+        subject.local == true &&
+        subject.active == true &&
+        subject.user == {quoted}) {{
+        return polkit.Result.YES;
+    }}
+}});
+''', encoding="utf-8")
+PY
+    chmod 0644 "$temporario"
+    sudo install -D -o root -g root -m 0644 "$temporario" "$regra"
+    sudo grep -Fq 'org.corectrl.helper.init' "$regra"
+    sudo grep -Fq 'org.corectrl.helperkiller.init' "$regra"
+    echo "    Polkit: CoreCtrl autorizado sem popup somente para $usuario"
+}
+
 desativar_controladores_conflitantes() {
     # Nao removemos pacotes preexistentes: apenas deixamos de iniciar os dois
     # servicos que podem reescrever governor, clocks ou limites por baixo do
@@ -171,6 +212,7 @@ PY
 }
 
 desativar_controladores_conflitantes
+configurar_polkit
 instalar_perfil
 configurar_boot
 configurar_hyprland

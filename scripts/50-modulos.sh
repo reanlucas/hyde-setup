@@ -47,6 +47,23 @@ for repo in hyde-widgets hyde-ai; do
     "$alvo/install.sh"
 done
 
+if [ "${SPOTIFY_TRAY:-0}" = "1" ]; then
+    waybar_cfg="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/config.jsonc"
+    [ -f "$waybar_cfg" ] || {
+        echo "    ERRO: configuracao ativa do Waybar nao existe: $waybar_cfg" >&2
+        exit 1
+    }
+    grep -Fq 'group/hyde-spotify' "$waybar_cfg" || {
+        echo "    ERRO: widget do Spotify nao entrou na configuracao ativa do Waybar" >&2
+        exit 1
+    }
+    [ -x "$HOME/.local/lib/hyde-widgets/waybar-player" ] || {
+        echo "    ERRO: coletor do widget Spotify nao foi instalado" >&2
+        exit 1
+    }
+    echo "    Waybar confirmado: widget do Spotify no layout ativo"
+fi
+
 # O backend pode subir e responder ao ping sem ter um modelo configurado. A
 # restauracao desta maquina so esta pronta quando o Hypr-IA aponta para o
 # Ollama e para o mesmo modelo que a etapa 10 baixou.

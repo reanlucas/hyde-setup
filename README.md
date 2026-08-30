@@ -93,6 +93,7 @@ stage:
 
 ```bash
 hyde-widgets --show     # desktop widgets
+hyde-spotify --show     # reveals the running Spotify window
 hyde-ai --doctor        # checks the Hypr-IA backend and its Ollama venv
 ```
 
@@ -106,11 +107,11 @@ hyde-ai --doctor        # checks the Hypr-IA backend and its Ollama venv
 | `15-hyde-assets` | every active HyDE extra and every theme in the supported gallery |
 | `20-hyprland` | monitor, keyboard, keybinds, autostart and Spotify in the tray |
 | `30-teclado` | `~/.XCompose` so `'` + `c` gives ç |
-| `40-apps` | Spotify flags, spicetify, `Ctrl+C`/`Ctrl+V` in kitty, VS Code theme, waybar scale, Vulkan |
+| `40-apps` | verified Spotify launcher, Spicetify with stock-client recovery, `Ctrl+C`/`Ctrl+V` in kitty, VS Code theme, waybar scale, Vulkan |
 | `45-nautilus` | Nautilus, gvfs, thumbnails, kitty in the context menu, and the MacOS theme recoloured by wallbash |
-| `50-modulos` | installs `hyde-widgets`, `hyde-ai` and `hypr-ia`, configures the selected Ollama model, then runs a final doctor |
+| `50-modulos` | installs `hyde-widgets`, `hyde-ai` and `hypr-ia`, verifies the Spotify widget in the active Waybar layout, configures the selected Ollama model, then runs a final doctor |
 | `55-energia` | never lock or suspend on idle; the screen alone goes off |
-| `60-corectrl` | CoreCtrl only: restores this machine's AMD profile, adds `amdgpu.ppfeaturemask=0xffffffff` to the UKI cmdline, disables `lactd`/`power-profiles-daemon` if present, and starts CoreCtrl in the tray |
+| `60-corectrl` | CoreCtrl only: restores this machine's AMD profile, adds `amdgpu.ppfeaturemask=0xffffffff` to the UKI cmdline, installs a user-scoped Polkit rule, disables conflicting daemons, and starts CoreCtrl in the tray |
 | `65-jogos` | CS2 and friends: real fullscreen, direct scanout, tearing allowed |
 
 <details>
@@ -385,8 +386,13 @@ hl.window_rule({
 })
 ```
 
-`SUPER + S`, HyDE's own bind, reveals the window. The tray icon and the player
-widget drive playback without it.
+`SUPER + S`, HyDE's own bind, reveals the window. Stage 40 also installs
+`hyde-spotify` and a user-level desktop entry. Launching Spotify from an app
+menu, a `spotify:` link, or the Waybar menu now reveals the already-running
+scratchpad window instead of silently exiting with “Opening in existing browser
+session”. After Spicetify finishes, the stage restarts Spotify and confirms
+that it created a Hyprland window; if the patch broke startup, it restores the
+stock client and retries.
 
 A `.desktop` in `~/.config/autostart` wouldn't help either: Hyprland does not
 fire `xdg-desktop-autostart` on its own.
@@ -409,8 +415,11 @@ Running `install.sh` on a fresh Arch with HyDE restores the tracked machine
 configuration: monitor, accented keyboard, keybinds, autostart, Spotify in the
 tray, kitty, VS Code, waybar scale, Ollama, both modules, all currently
 published gallery themes, all active HyDE extras, and the CoreCtrl global
-profile. The CoreCtrl stage also verifies its persistent boot parameter and
-starts the application in the tray after Waybar. The scripts are idempotent;
+profile. The CoreCtrl stage also verifies its persistent boot parameter,
+starts the application in the tray after Waybar, and authorizes only
+`org.corectrl.helper.init` / `org.corectrl.helperkiller.init` for the local,
+active installer user so the login no longer produces a password popup. The
+scripts are idempotent;
 an error now makes the top-level installer exit non-zero instead of reporting
 a false success.
 

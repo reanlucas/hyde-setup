@@ -1,15 +1,50 @@
 #!/usr/bin/env bash
 # Spotify na bandeja, spicetify com as cores do tema, e o Vulkan certo.
-set -uo pipefail
-. "$(dirname "${BASH_SOURCE[0]}")/../setup.conf"
+set -euo pipefail
+BASE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CONF="${HYDE_SETUP_CONF:-$BASE/setup.conf}"
+# shellcheck disable=SC1090
+. "$CONF"
 
-if [ "${SPOTIFY_TRAY:-0}" = "1" ] && command -v spotify >/dev/null 2>&1; then
+SPOTIFY_ATIVO=0
+
+if [ "${SPOTIFY_TRAY:-0}" = "1" ]; then
     echo "==> Spotify na bandeja"
-    # O autostart e a regra de janela ficam no bloco lua (etapa 20). Aqui so
-    # as flags do cliente. Um .desktop em ~/.config/autostart nao serviria:
-    # o Hyprland nao dispara o xdg-desktop-autostart por conta propria.
+    command -v spotify >/dev/null 2>&1 || {
+        echo "ERRO: SPOTIFY_TRAY=1, mas o executavel spotify nao foi instalado" >&2
+        exit 1
+    }
+
+    mkdir -p "$HOME/.local/bin" "$HOME/.local/share/applications" \
+        "$HOME/.config"
+    install -m0755 "$BASE/bin/hyde-spotify" "$HOME/.local/bin/hyde-spotify"
+
+    # O cliente continua nativo em Wayland. Quem decide entre iniciar e
+    # mostrar a janela ja existente e o wrapper acima.
     printf -- '--ozone-platform=wayland\n' > "$HOME/.config/spotify-flags.conf"
     rm -f "$HOME/.config/autostart/spotify-tray.desktop"   # de versoes antigas
+
+    # Sobrescreve apenas a entrada do usuario: menus, links spotify: e o botao
+    # "Open Spotify" do Waybar passam pelo launcher consciente do scratchpad.
+    cat >"$HOME/.local/share/applications/spotify.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=Spotify
+GenericName=Music Player
+Comment=Play music and podcasts
+Icon=spotify-client
+TryExec=$HOME/.local/bin/hyde-spotify
+Exec=$HOME/.local/bin/hyde-spotify --show --uri=%u
+Terminal=false
+MimeType=x-scheme-handler/spotify;
+Categories=Audio;Music;Player;AudioVideo;
+StartupWMClass=spotify
+EOF
+    command -v desktop-file-validate >/dev/null 2>&1 \
+        && desktop-file-validate "$HOME/.local/share/applications/spotify.desktop"
+    command -v update-desktop-database >/dev/null 2>&1 \
+        && update-desktop-database "$HOME/.local/share/applications" >/dev/null
+    SPOTIFY_ATIVO=1
 fi
 
 if [ "${SPICETIFY:-0}" = "1" ] && command -v spicetify >/dev/null 2>&1; then
@@ -18,8 +53,37 @@ if [ "${SPICETIFY:-0}" = "1" ] && command -v spicetify >/dev/null 2>&1; then
     sudo chmod a+wr /opt/spotify 2>/dev/null || true
     sudo chmod a+wr -R /opt/spotify/Apps 2>/dev/null || true
     pkill -x spotify 2>/dev/null || true
-    hyde-shell wallbash spotify >/dev/null 2>&1 || true
+    for _ in $(seq 1 50); do
+        pgrep -x spotify >/dev/null 2>&1 || break
+        sleep 0.1
+    done
+    if ! hyde-shell wallbash spotify; then
+        echo "    AVISO: o tema do Spicetify falhou; restaurando o cliente original" >&2
+        spicetify restore || true
+    fi
     echo "    obs: atualizacoes do pacote spotify desfazem isto; rode de novo"
+fi
+
+if [ "$SPOTIFY_ATIVO" -eq 1 ]; then
+    # A etapa do Spicetify encerra o cliente. Um handler hyprland.start so
+    # roda no login, portanto precisamos subi-lo de novo ao terminar o setup.
+    # O launcher confirma processo + janela; se o tema deixou o cliente
+    # quebrado, restaura o original e tenta uma ultima vez.
+    if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+        if ! "$HOME/.local/bin/hyde-spotify" --background; then
+            if [ "${SPICETIFY:-0}" = "1" ] && command -v spicetify >/dev/null 2>&1; then
+                echo "    Spicetify impediu a inicializacao; restaurando Spotify original" >&2
+                spicetify restore || true
+                pkill -x spotify 2>/dev/null || true
+                "$HOME/.local/bin/hyde-spotify" --background
+            else
+                exit 1
+            fi
+        fi
+        echo "    Spotify iniciado e pronto no scratchpad (SUPER + S)"
+    else
+        echo "    launcher pronto; Spotify subira no proximo login Hyprland"
+    fi
 fi
 
 if [ "${KITTY_COPIA_COLA:-0}" = "1" ] && command -v kitty >/dev/null 2>&1; then

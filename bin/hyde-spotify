@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+# Abre a janela que o hyde-setup guarda no scratchpad ou inicia o cliente.
+# O Spotify, sozinho, apenas avisa uma instancia existente e nao pede ao
+# Hyprland que mostre a workspace especial; por isso launchers pareciam mortos.
+set -euo pipefail
+
+SPOTIFY_BIN="${HYDE_SPOTIFY_BIN:-/usr/bin/spotify}"
+STATE="${XDG_STATE_HOME:-$HOME/.local/state}/hyde-spotify"
+LOG="$STATE/spotify.log"
+MODE="show"
+START_PID=""
+
+case "${1:-}" in
+    --background) MODE="background"; shift ;;
+    --show)       MODE="show"; shift ;;
+esac
+
+mkdir -p "$STATE"
+if [ -f "$LOG" ] && [ "$(wc -c <"$LOG")" -gt 1048576 ]; then
+    mv -f "$LOG" "$LOG.old"
+fi
+if command -v flock >/dev/null 2>&1; then
+    exec 9>"$STATE/launcher.lock"
+    flock -w 20 9 || {
+        echo "hyde-spotify: outro launcher nao terminou em 20s" >&2
+        exit 1
+    }
+fi
+
+[ -x "$SPOTIFY_BIN" ] || {
+    echo "hyde-spotify: executavel nao encontrado: $SPOTIFY_BIN" >&2
+    exit 127
+}
+
+hyprland_ativo() {
+    [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && command -v hyprctl >/dev/null 2>&1
+}
+
+spotify_principal_rodando() {
+    local pid args
+    while IFS= read -r pid; do
+        [ -r "/proc/$pid/cmdline" ] || continue
+        args="$(tr '\0' ' ' <"/proc/$pid/cmdline")"
+        case "$args" in
+            *"--type="*|*"--monitor-self"*|*"crashpad-handler"*) continue ;;
+        esac
+        return 0
+    done < <(pgrep -u "$(id -u)" -x spotify 2>/dev/null || true)
+    return 1
+}
+
+janela_existe() {
+    hyprland_ativo || return 1
+    hyprctl clients -j 2>/dev/null | python3 -c '
+import json, sys
+try:
+    clients = json.load(sys.stdin)
+except Exception:
+    raise SystemExit(1)
+for client in clients:
+    text = " ".join(str(client.get(k, "")) for k in ("class", "initialClass", "title")).lower()
+    if "spotify" in text:
+        raise SystemExit(0)
+raise SystemExit(1)
+' >/dev/null
+}
+
+scratchpad_visivel() {
+    hyprctl monitors -j 2>/dev/null | python3 -c '
+import json, sys
+try:
+    monitors = json.load(sys.stdin)
+except Exception:
+    raise SystemExit(1)
+visible = any(
+    str(m.get("specialWorkspace", {}).get("name", "")) == "special:special"
+    for m in monitors
+)
+raise SystemExit(0 if visible else 1)
+' >/dev/null
+}
+
+iniciar() {
+    nohup "$SPOTIFY_BIN" "$@" >>"$LOG" 2>&1 &
+    START_PID=$!
+}
+
+mostrar() {
+    janela_existe || return 1
+    if ! scratchpad_visivel; then
+        # Na configuracao Lua do HyDE 0.56, `hyprctl dispatch ... special`
+        # tenta avaliar o argumento sem aspas e falha. A API Lua e a fonte
+        # nativa desta sessao; o dispatch classico fica como compatibilidade.
+        hyprctl eval 'hl.dispatch(hl.dsp.workspace.toggle_special())' >/dev/null 2>&1 \
+            || hyprctl dispatch togglespecialworkspace special >/dev/null
+    fi
+    hyprctl eval \
+        'hl.dispatch(hl.dsp.focus({window = "class:^(spotify)$"}))' \
+        >/dev/null 2>&1 \
+        || hyprctl dispatch focuswindow 'class:^(spotify)$' >/dev/null 2>&1 \
+        || true
+}
+
+aguardar_janela() {
+    local _
+    for _ in $(seq 1 150); do
+        janela_existe && return 0
+        spotify_principal_rodando || {
+            [ -n "$START_PID" ] && kill -0 "$START_PID" 2>/dev/null && {
+                sleep 0.1
+                continue
+            }
+            return 1
+        }
+        sleep 0.1
+    done
+    return 1
+}
+
+encerrar() {
+    pkill -u "$(id -u)" -x spotify 2>/dev/null || true
+    for _ in $(seq 1 50); do
+        spotify_principal_rodando || return 0
+        sleep 0.1
+    done
+    return 1
+}
+
+# Fora do Hyprland o wrapper continua sendo um launcher normal.
+if ! hyprland_ativo; then
+    if [ "$MODE" = "background" ]; then
+        spotify_principal_rodando || iniciar "$@"
+        exit 0
+    fi
+    exec "$SPOTIFY_BIN" "$@"
+fi
+
+if spotify_principal_rodando; then
+    # URI recebida por um arquivo/spotify: link precisa ser encaminhada para a
+    # instancia existente antes de trazermos sua janela para a frente.
+    if [ "$#" -gt 0 ]; then
+        "$SPOTIFY_BIN" "$@" >>"$LOG" 2>&1 || true
+    fi
+    if aguardar_janela; then
+        [ "$MODE" = "background" ] || mostrar
+        exit 0
+    fi
+    echo "hyde-spotify: instancia sem janela; reiniciando" >>"$LOG"
+    encerrar || {
+        echo "hyde-spotify: nao foi possivel encerrar a instancia travada" >&2
+        exit 1
+    }
+fi
+
+iniciar "$@"
+
+# Distingue "processo abriu" de "janela pronta". O segundo e o que torna
+# confiavel clicar no launcher imediatamente depois do login.
+if aguardar_janela; then
+    [ "$MODE" = "background" ] || mostrar
+    exit 0
+fi
+
+echo "hyde-spotify: Spotify encerrou ou nao criou uma janela em 15s; veja $LOG" >&2
+exit 1

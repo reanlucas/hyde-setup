@@ -11,6 +11,7 @@ mkdir -p "$WORK/bin" "$WORK/home/.local/bin" "$WORK/src" \
 cat >"$WORK/setup.conf" <<EOF
 HYPRIA_DIR="$WORK/hypr-ia"
 OLLAMA_MODELO="qwen3.5:9b"
+SPOTIFY_TRAY=1
 EOF
 printf '[project]\nname="hypr-ia-test"\n' >"$WORK/hypr-ia/pyproject.toml"
 ln -s "$(command -v python3)" "$WORK/hypr-ia/.venv/bin/python"
@@ -20,6 +21,14 @@ for repo in hyde-widgets hyde-ai; do
     cat >"$WORK/src/$repo/install.sh" <<EOF
 #!/usr/bin/env bash
 printf 'install $repo\n' >>"\$MODULE_TEST_LOG"
+if [ "$repo" = "hyde-widgets" ]; then
+    mkdir -p "\${XDG_CONFIG_HOME:-\$HOME/.config}/waybar" \
+        "\$HOME/.local/lib/hyde-widgets"
+    printf '{"modules-center":["group/hyde-spotify"]}\n' \
+        >"\${XDG_CONFIG_HOME:-\$HOME/.config}/waybar/config.jsonc"
+    touch "\$HOME/.local/lib/hyde-widgets/waybar-player"
+    chmod +x "\$HOME/.local/lib/hyde-widgets/waybar-player"
+fi
 EOF
     chmod +x "$WORK/src/$repo/install.sh"
 done
@@ -42,6 +51,7 @@ EOF
 chmod +x "$WORK/home/.local/bin/hyde-ai" "$WORK/bin/"*
 
 HOME="$WORK/home" \
+XDG_CONFIG_HOME="$WORK/home/.config" \
 HYDE_SETUP_CONF="$WORK/setup.conf" \
 HYDE_SETUP_MODULOS="$WORK/src" \
 MODULE_TEST_LOG="$WORK/calls.log" \
@@ -52,5 +62,6 @@ grep -Fq 'install hyde-widgets' "$WORK/calls.log"
 grep -Fq 'install hyde-ai' "$WORK/calls.log"
 grep -Fq 'provider: ollama' "$WORK/home/.hypr-ia/config.yaml"
 grep -Fq 'default: qwen3.5:9b' "$WORK/home/.hypr-ia/config.yaml"
+grep -Fq 'group/hyde-spotify' "$WORK/home/.config/waybar/config.jsonc"
 
 printf 'ok: modules + Hypr-IA/Ollama\n'

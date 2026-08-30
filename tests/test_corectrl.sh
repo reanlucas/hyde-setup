@@ -12,6 +12,8 @@ GPU_VENDOR="amd"
 CORECTRL=1
 CORECTRL_START_DELAY=7
 CORECTRL_RESTORE_PROFILE=1
+CORECTRL_POLKIT=1
+CORECTRL_POLKIT_RULE="$WORK/corectrl.rules"
 CORECTRL_CMDLINE="$WORK/kernel.cmdline"
 EOF
 printf 'root=UUID=test quiet\n' >"$WORK/kernel.cmdline"
@@ -19,6 +21,18 @@ printf '%s\n' '-- user override' >"$WORK/config/hypr/hyprland.lua"
 
 cat >"$WORK/bin/sudo" <<'EOF'
 #!/usr/bin/env bash
+if [ "$1" = "install" ]; then
+    shift
+    args=()
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            -o|-g|-m) shift 2 ;;
+            -D) args+=("$1"); shift ;;
+            *) args+=("$1"); shift ;;
+        esac
+    done
+    exec install -m 0644 "${args[@]}"
+fi
 exec "$@"
 EOF
 cat >"$WORK/bin/pacman" <<'EOF'
@@ -51,6 +65,9 @@ grep -qw 'amdgpu.ppfeaturemask=0xffffffff' "$WORK/kernel.cmdline"
 grep -Fq -- 'corectrl --minimize-systray' "$WORK/config/hypr/hyprland.lua"
 grep -Fq -- 'sleep 7' "$WORK/config/hypr/hyprland.lua"
 grep -Fq -- '_G.__corectrl_autostart' "$WORK/config/hypr/hyprland.lua"
+grep -Fq 'org.corectrl.helper.init' "$WORK/corectrl.rules"
+grep -Fq 'org.corectrl.helperkiller.init' "$WORK/corectrl.rules"
+grep -Fq 'subject.user == "'"$(id -un)"'"' "$WORK/corectrl.rules"
 unzip -p "$WORK/config/corectrl/profiles/_global_.ccpro" profile.xml | \
     grep -Fq 'AMD_PM_POWERCAP active="true" value="255"'
 

@@ -58,6 +58,7 @@ fi
 echo
 echo "════ Pronto ════"
 echo "  hyde-widgets --show     widgets do desktop"
+echo "  hyde-spotify --show     mostra o Spotify guardado no scratchpad"
 echo "  hyde-ai --doctor        confirma o backend Hypr-IA + Ollama"
 echo "                          (outros provedores: /key no painel)"
 echo "  ${HYDEAI_TECLA1}  abre o chat   ·   ${WIDGETS_TECLA}  alterna os widgets"
