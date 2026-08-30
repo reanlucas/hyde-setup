@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Pacotes: extras do HyDE, ferramentas e o stack de LLM local.
-set -uo pipefail
+set -euo pipefail
 . "$(dirname "${BASH_SOURCE[0]}")/../setup.conf"
 
 echo "==> Rede: forca https no lugar de http"

@@ -58,6 +58,6 @@ fi
 echo
 echo "════ Pronto ════"
 echo "  hyde-widgets --show     widgets do desktop"
-echo "  hyde-ai --setup         confere o backend Hypr-IA do chat"
-echo "                          (chaves: /key no painel, ou ~/.hypr-ia/.env)"
+echo "  hyde-ai --doctor        confirma o backend Hypr-IA + Ollama"
+echo "                          (outros provedores: /key no painel)"
 echo "  ${HYDEAI_TECLA1}  abre o chat   ·   ${WIDGETS_TECLA}  alterna os widgets"

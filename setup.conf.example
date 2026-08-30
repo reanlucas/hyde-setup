@@ -45,6 +45,7 @@ HYDE_DIR="$HOME/HyDE"              # checkout do HyDE instalado antes deste setu
 HYDE_EXTRAS=1                       # instala todas as entradas de pkg_extra.lst
 HYDE_TEMAS="galeria"               # galeria = todos os temas suportados pelo HyDE
                                   # "oficiais" legado tambem instala todos; 0 = nao instala
+HYDE_TEMAS_MINIMO=50                # falha se o catalogo vier truncado/antigo
 
 # ── Widgets ──────────────────────────────────────────────────────────────
 WIDGETS_CAMADA="back"             # back = atras das janelas | front

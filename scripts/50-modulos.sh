@@ -2,8 +2,11 @@
 # Clona (ou atualiza) e instala hyde-widgets e hyde-ai — e o hypr-ia,
 # que e o backend do hyde-ai (modelos, tools e loop agentico; o painel so
 # spawna o gateway dele).
-set -uo pipefail
-. "$(dirname "${BASH_SOURCE[0]}")/../setup.conf"
+set -euo pipefail
+BASE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CONF="${HYDE_SETUP_CONF:-$BASE/setup.conf}"
+# shellcheck disable=SC1090
+. "$CONF"
 
 DEST="${HYDE_SETUP_MODULOS:-$HOME/.local/src}"
 mkdir -p "$DEST"
@@ -43,3 +46,26 @@ for repo in hyde-widgets hyde-ai; do
         echo "    ERRO: $repo nao possui install.sh executavel" >&2; exit 1; }
     "$alvo/install.sh"
 done
+
+# O backend pode subir e responder ao ping sem ter um modelo configurado. A
+# restauracao desta maquina so esta pronta quando o Hypr-IA aponta para o
+# Ollama e para o mesmo modelo que a etapa 10 baixou.
+echo "==> Hypr-IA com Ollama (${OLLAMA_MODELO})"
+HPY="$HYPRIA/.venv/bin/python"
+[ -x "$HPY" ] || {
+    echo "    ERRO: Python do venv ausente em $HPY" >&2
+    exit 1
+}
+HYPRIA_HOME="${HERMES_HOME:-$HOME/.hypr-ia}"
+"$HPY" "$BASE/scripts/configurar-hypria-ollama.py" \
+    "$HYPRIA_HOME/config.yaml" "$OLLAMA_MODELO"
+ollama show "$OLLAMA_MODELO" >/dev/null || {
+    echo "    ERRO: modelo $OLLAMA_MODELO nao esta disponivel no Ollama" >&2
+    exit 1
+}
+"$HOME/.local/bin/hyde-ai" --doctor >/dev/null || {
+    echo "    ERRO: hyde-ai/Hypr-IA falhou na verificacao final" >&2
+    "$HOME/.local/bin/hyde-ai" --doctor >&2 || true
+    exit 1
+}
+echo "    backend pronto: provider=ollama, model=$OLLAMA_MODELO"

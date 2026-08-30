@@ -93,8 +93,7 @@ stage:
 
 ```bash
 hyde-widgets --show     # desktop widgets
-hyde-ai --setup         # checks the chat's Hypr-IA backend
-                        # (API keys: /key in the panel, or ~/.hypr-ia/.env)
+hyde-ai --doctor        # checks the Hypr-IA backend and its Ollama venv
 ```
 
 ---
@@ -109,7 +108,7 @@ hyde-ai --setup         # checks the chat's Hypr-IA backend
 | `30-teclado` | `~/.XCompose` so `'` + `c` gives ç |
 | `40-apps` | Spotify flags, spicetify, `Ctrl+C`/`Ctrl+V` in kitty, VS Code theme, waybar scale, Vulkan |
 | `45-nautilus` | Nautilus, gvfs, thumbnails, kitty in the context menu, and the MacOS theme recoloured by wallbash |
-| `50-modulos` | clones and installs `hyde-widgets`, `hyde-ai` and its backend, `hypr-ia` |
+| `50-modulos` | installs `hyde-widgets`, `hyde-ai` and `hypr-ia`, configures the selected Ollama model, then runs a final doctor |
 | `55-energia` | never lock or suspend on idle; the screen alone goes off |
 | `60-corectrl` | CoreCtrl only: restores this machine's AMD profile, adds `amdgpu.ppfeaturemask=0xffffffff` to the UKI cmdline, disables `lactd`/`power-profiles-daemon` if present, and starts CoreCtrl in the tray |
 | `65-jogos` | CS2 and friends: real fullscreen, direct scanout, tearing allowed |
