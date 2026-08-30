@@ -60,15 +60,32 @@ instalar_extras() {
 }
 
 instalar_temas() {
+    # O HyDE Lua ainda consulta este estado legado sem conferir se ele existe.
+    # Um arquivo vazio e valido para o hyq e representa corretamente "nenhum
+    # override Hyprlang". O contador exportado contorna um typo do color.set.sh
+    # atual (render_failed vs render_failures) durante esta restauracao.
+    local estado_hyde="${XDG_STATE_HOME:-$HOME/.local/state}/hyde"
+    mkdir -p "$estado_hyde"
+    [ -e "$estado_hyde/hyprland.conf" ] || touch "$estado_hyde/hyprland.conf"
+    export render_failures=0
+
+    local color_set="$HOME/.local/lib/hyde/color.set.sh"
+    if [ -f "$color_set" ] \
+       && grep -Fxq 'render_failed=0' "$color_set" \
+       && grep -q 'render_failures' "$color_set"; then
+        cp -pn "$color_set" "$color_set.bak-hyde-setup"
+        sed -i '0,/^render_failed=0$/s//render_failures=0/' "$color_set"
+        echo "    compatibilidade wallbash corrigida (render_failures)"
+    fi
+
     case "${HYDE_TEMAS:-galeria}" in
         0|nao|none)
             echo "==> Temas do HyDE desativados"
             return 0
             ;;
         oficiais)
-            echo "==> Temas oficiais do HyDE"
-            "$HYDE_DIR/Scripts/restore_thm.sh" "$HYDE_DIR/Scripts/themepatcher.lst"
-            ;;
+            echo "==> HYDE_TEMAS=oficiais e legado; instalando a galeria completa"
+            ;&
         galeria|todos|all)
             [ -x "$HYDECTL" ] || HYDECTL="$(command -v hydectl || true)"
             [ -n "$HYDECTL" ] && [ -x "$HYDECTL" ] || {
@@ -79,7 +96,7 @@ instalar_temas() {
             "$HYDECTL" theme import --fetch all
             ;;
         *)
-            echo "ERRO: HYDE_TEMAS deve ser galeria, oficiais ou 0" >&2
+            echo "ERRO: HYDE_TEMAS deve ser galeria (ou oficiais legado) ou 0" >&2
             return 1
             ;;
     esac

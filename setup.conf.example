@@ -44,7 +44,7 @@ CORECTRL_RESTORE_PROFILE=1          # restaura o perfil desta RX 7900 XT
 HYDE_DIR="$HOME/HyDE"              # checkout do HyDE instalado antes deste setup
 HYDE_EXTRAS=1                       # instala todas as entradas de pkg_extra.lst
 HYDE_TEMAS="galeria"               # galeria = todos os temas suportados pelo HyDE
-                                  # oficiais = so os 12 temas oficiais; 0 = nao instala
+                                  # "oficiais" legado tambem instala todos; 0 = nao instala
 
 # ── Widgets ──────────────────────────────────────────────────────────────
 WIDGETS_CAMADA="back"             # back = atras das janelas | front

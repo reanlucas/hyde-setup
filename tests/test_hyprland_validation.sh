@@ -27,7 +27,7 @@ HYDEAI_TECLA1="SUPER, I"
 HYDEAI_TECLA2="SUPER, dead_grave"
 WIDGETS_TECLA="SUPER, D"
 FULLSCREEN_TECLA="SHIFT, F11"
-SPOTIFY_TRAY=0
+SPOTIFY_TRAY=1
 EOF
 
 # Aspas e dois-pontos sao texto, nao devem quebrar a geracao de Lua.
@@ -47,5 +47,19 @@ if XDG_CONFIG_HOME="$WORK/config" PATH="$WORK/bin:$PATH" \
     exit 1
 fi
 cmp -s "$WORK/after-valid.lua" "$WORK/config/hypr/hyprland.lua"
+
+# Reproduz a falha observada: o arquivo ja chega invalido, antes do bloco do
+# setup. A etapa precisa preservar esse original e reconstruir o entrypoint.
+cat >"$WORK/config/hypr/hyprland.lua" <<'EOF'
+-- configuracao corrompida recebida da migracao anterior
+monitor: DP-2, 2560x1440@360
+EOF
+HYDE_DIR="$WORK/HyDE-ausente" XDG_CONFIG_HOME="$WORK/config" PATH="$WORK/bin:$PATH" \
+HYDE_SETUP_CONF="$WORK/valid.conf" bash "$BASE/scripts/20-hyprland.sh"
+luac -p "$WORK/config/hypr/hyprland.lua"
+grep -Fq 'dofile(entry)' "$WORK/config/hypr/hyprland.lua"
+grep -Fq -- '-- >>> hyde-setup' "$WORK/config/hypr/hyprland.lua"
+find "$WORK/config/hypr" -maxdepth 1 -name 'hyprland.lua.bak-*' \
+    -exec grep -lF 'monitor: DP-2' {} + | grep -q .
 
 printf 'ok: hyprland validation\n'
