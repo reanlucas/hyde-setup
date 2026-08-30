@@ -21,7 +21,10 @@ if [ ! -f setup.conf ]; then
 fi
 
 # shellcheck disable=SC1091
-. ./setup.conf
+if ! . ./setup.conf; then
+    echo "setup.conf invalido; corrija-o antes de instalar." >&2
+    exit 1
+fi
 
 command -v hyprctl >/dev/null || { echo "Hyprland nao encontrado." >&2; exit 1; }
 [ -d "$HOME/.config/hypr" ] || { echo "HyDE nao instalado." >&2; exit 1; }
@@ -41,6 +44,7 @@ for etapa in scripts/*.sh; do
     if ! bash "$etapa"; then
         echo "  (etapa $nome terminou com erro)" >&2
         falhou=1
+        break
     fi
 done
 

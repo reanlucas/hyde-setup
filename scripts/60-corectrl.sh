@@ -7,7 +7,10 @@ set -euo pipefail
 BASE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONF="${HYDE_SETUP_CONF:-$BASE/setup.conf}"
 # shellcheck disable=SC1090
-. "$CONF"
+if ! . "$CONF"; then
+    echo "ERRO: nao foi possivel ler $CONF" >&2
+    exit 1
+fi
 
 [ "${CORECTRL:-1}" = "1" ] || { echo "CORECTRL=0 -- pulando"; exit 0; }
 [ "${GPU_VENDOR:-}" = "amd" ] || {
@@ -112,6 +115,8 @@ configurar_hyprland() {
     local ini="-- >>> hyde-setup:corectrl"
     local fim="-- <<< hyde-setup:corectrl"
     [ -f "$alvo" ] || { echo "ERRO: $alvo nao existe -- o HyDE foi instalado?" >&2; return 1; }
+    local backup="$alvo.bak-corectrl-$(date +%Y%m%d-%H%M%S)"
+    cp "$alvo" "$backup"
 
     python3 - "$alvo" "$ini" "$fim" "$DELAY" <<'PY'
 import pathlib
@@ -145,7 +150,23 @@ end
 '''
 pathlib.Path(path).write_text(text.rstrip() + "\n\n" + block, encoding="utf-8")
 PY
-    command -v hyprctl >/dev/null 2>&1 && hyprctl reload >/dev/null 2>&1 || true
+    if command -v luac >/dev/null 2>&1 && ! luac -p "$alvo"; then
+        echo "ERRO: o bloco CoreCtrl nao e Lua valido; restaurando $backup" >&2
+        cp "$backup" "$alvo"
+        return 1
+    fi
+    if command -v hyprctl >/dev/null 2>&1; then
+        hyprctl reload >/dev/null 2>&1 || true
+        local erros
+        erros="$(hyprctl configerrors 2>/dev/null | tr -d '[:space:]')"
+        if [ -n "$erros" ]; then
+            echo "ERRO: o Hyprland recusou o bloco CoreCtrl; restaurando $backup" >&2
+            hyprctl configerrors >&2
+            cp "$backup" "$alvo"
+            hyprctl reload >/dev/null 2>&1 || true
+            return 1
+        fi
+    fi
     echo "    autostart do CoreCtrl configurado no Hyprland"
 }
 

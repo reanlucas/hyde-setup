@@ -2,14 +2,20 @@
 # Escreve as personalizacoes no override do usuario (~/.config/hypr/hyprland.lua),
 # que o HyDE nunca sobrescreve. Trecho delimitado para poder reescrever.
 set -uo pipefail
-. "$(dirname "${BASH_SOURCE[0]}")/../setup.conf"
+CONF="${HYDE_SETUP_CONF:-$(dirname "${BASH_SOURCE[0]}")/../setup.conf}"
+# shellcheck disable=SC1090
+if ! . "$CONF"; then
+    echo "ERRO: nao foi possivel ler $CONF" >&2
+    exit 1
+fi
 
-ALVO="$HOME/.config/hypr/hyprland.lua"
+ALVO="${XDG_CONFIG_HOME:-$HOME/.config}/hypr/hyprland.lua"
 INI="-- >>> hyde-setup"
 FIM="-- <<< hyde-setup"
 
 [ -f "$ALVO" ] || { echo "$ALVO nao existe -- o HyDE foi instalado?" >&2; exit 1; }
-cp "$ALVO" "$ALVO.bak-$(date +%Y%m%d-%H%M%S)"
+BAK="$ALVO.bak-$(date +%Y%m%d-%H%M%S)"
+cp "$ALVO" "$BAK"
 
 # remove um bloco anterior, para o script ser idempotente
 python3 - "$ALVO" "$INI" "$FIM" <<'PY'
@@ -92,6 +98,20 @@ end)
 $FIM
 LUA
 
-command -v luac >/dev/null && luac -p "$ALVO" || true
-hyprctl reload >/dev/null 2>&1 || true
+if command -v luac >/dev/null 2>&1 && ! luac -p "$ALVO"; then
+    echo "ERRO: o bloco gerado nao e Lua valido; restaurando $BAK" >&2
+    cp "$BAK" "$ALVO"
+    exit 1
+fi
+if command -v hyprctl >/dev/null 2>&1; then
+    hyprctl reload >/dev/null 2>&1 || true
+    ERROS="$(hyprctl configerrors 2>/dev/null | tr -d '[:space:]')"
+    if [ -n "$ERROS" ]; then
+        echo "ERRO: o Hyprland recusou o bloco; restaurando $BAK" >&2
+        hyprctl configerrors >&2
+        cp "$BAK" "$ALVO"
+        hyprctl reload >/dev/null 2>&1 || true
+        exit 1
+    fi
+fi
 echo "==> hyprland.lua atualizado"

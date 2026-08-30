@@ -11,7 +11,12 @@
 # barra por cima, com direct scanout e tearing liberado. Quem faz isso e o
 # compositor, nao o jogo.
 set -uo pipefail
-. "$(dirname "${BASH_SOURCE[0]}")/../setup.conf"
+CONF="${HYDE_SETUP_CONF:-$(dirname "${BASH_SOURCE[0]}")/../setup.conf}"
+# shellcheck disable=SC1090
+if ! . "$CONF"; then
+    echo "ERRO: nao foi possivel ler $CONF" >&2
+    exit 1
+fi
 
 [ "${JOGOS:-1}" = "1" ] || { echo "==> JOGOS=0, nada a fazer"; exit 0; }
 
@@ -82,7 +87,15 @@ p.write_text(s.rstrip() + "\n\n" + bloco, encoding="utf-8")
 PYLUA
 
 # O Hyprland rejeita o arquivo inteiro quando o Lua nao compila -- e ai vao
-# junto todos os binds do usuario. Se a recarga acusar erro, volta o backup.
+# junto todos os binds do usuario. Validar antes da recarga atribui o erro a
+# etapa que o produziu; sem isso um configerror antigo parecia ser do jogo.
+if command -v luac >/dev/null 2>&1 && ! luac -p "$ALVO"; then
+    echo "!!  o bloco de jogos nao e Lua valido -- restaurando $BAK" >&2
+    cp "$BAK" "$ALVO"
+    exit 1
+fi
+
+# Se a sintaxe passou mas o Hyprland rejeitar uma chave da DSL, volta o backup.
 hyprctl reload >/dev/null 2>&1 || true
 sleep 1
 ERROS="$(hyprctl configerrors 2>/dev/null | tr -d '[:space:]')"
