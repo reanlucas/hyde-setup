@@ -8,19 +8,12 @@ echo "==> Rede: forca https no lugar de http"
 # corporativas e trava o paru sem mensagem de erro.
 git config --global url."https://github.com/".insteadOf "http://github.com/"
 
-echo "==> Extras do HyDE"
-if [ -f "$HOME/HyDE/Scripts/pkg_extra.lst" ]; then
-    "$HOME/HyDE/Scripts/install_pkg.sh" "$HOME/HyDE/Scripts/pkg_extra.lst" || true
-else
-    echo "    HyDE nao encontrado em ~/HyDE -- pulando os extras"
-fi
-
 echo "==> Ferramentas"
 sudo pacman -S --needed --noconfirm \
-    ddcutil lm_sensors playerctl cava jq socat github-cli || true
+    ddcutil lm_sensors playerctl cava jq socat github-cli
 
 echo "==> LLM local ($OLLAMA_PACOTE)"
-sudo pacman -S --needed --noconfirm "$OLLAMA_PACOTE" aichat gemini-cli || true
+sudo pacman -S --needed --noconfirm "$OLLAMA_PACOTE" aichat gemini-cli
 sudo systemctl enable --now ollama
 
 echo "==> Ajuste do ollama para a GPU"
@@ -43,4 +36,4 @@ for _ in $(seq 1 30); do            # o daemon leva alguns segundos
     curl -sf http://127.0.0.1:11434/api/tags >/dev/null 2>&1 && break
     sleep 1
 done
-ollama pull "$OLLAMA_MODELO" || echo "    falhou; rode depois: ollama pull $OLLAMA_MODELO"
+ollama pull "$OLLAMA_MODELO"

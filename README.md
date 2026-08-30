@@ -8,9 +8,9 @@
 Arch minimal  →  HyDE  →  hyde-setup
 ```
 
-Automates what HyDE leaves out: extra packages, a local LLM with GPU
-acceleration, two custom modules, Portuguese accents on a US keyboard, monitor
-setup and app integrations.
+Automates what HyDE leaves out: every published HyDE theme and extra package,
+a local LLM with GPU acceleration, two custom modules, Portuguese accents on a
+US keyboard, monitor setup and app integrations.
 
 </div>
 
@@ -72,6 +72,7 @@ The minimum to review:
 | `MONITOR_SAIDA` `MONITOR_MODO` | `hyprctl monitors` |
 | `MONITOR_ESCALA` | the division must come out whole — `2560/1.25 = 2048` ✅ |
 | `GPU_VENDOR` `OLLAMA_PACOTE` | `amd` → `ollama-rocm`, otherwise `ollama` |
+| `CORECTRL_RESTORE_PROFILE` | `1` restores this machine's RX 7900 XT profile; use `0` on another GPU |
 | `OLLAMA_MODELO` | must fit in your VRAM |
 | `KB_VARIANT` | `intl` or `altgr-intl` — see below |
 
@@ -102,14 +103,15 @@ hyde-ai --setup         # checks the chat's Hypr-IA backend
 
 | Stage | Contents |
 |---|---|
-| `10-pacotes` | HyDE extras, tooling, `ollama` tuned for the GPU, first model |
+| `10-pacotes` | tooling, `ollama` tuned for the GPU, first model |
+| `15-hyde-assets` | every active HyDE extra and every theme in the supported gallery |
 | `20-hyprland` | monitor, keyboard, keybinds, autostart and Spotify in the tray |
 | `30-teclado` | `~/.XCompose` so `'` + `c` gives ç |
 | `40-apps` | Spotify flags, spicetify, `Ctrl+C`/`Ctrl+V` in kitty, VS Code theme, waybar scale, Vulkan |
 | `45-nautilus` | Nautilus, gvfs, thumbnails, kitty in the context menu, and the MacOS theme recoloured by wallbash |
 | `50-modulos` | clones and installs `hyde-widgets`, `hyde-ai` and its backend, `hypr-ia` |
 | `55-energia` | never lock or suspend on idle; the screen alone goes off |
-| `60-gpu` | AMD GPU control: LACT (power cap, fan curve, voltage — the Adrenalin-tuning equivalent) + `amdgpu.ppfeaturemask` on the kernel cmdline |
+| `60-corectrl` | CoreCtrl only: restores this machine's AMD profile, adds `amdgpu.ppfeaturemask=0xffffffff` to the UKI cmdline, disables `lactd`/`power-profiles-daemon` if present, and starts CoreCtrl in the tray |
 | `65-jogos` | CS2 and friends: real fullscreen, direct scanout, tearing allowed |
 
 <details>
@@ -404,20 +406,25 @@ GPU. Without this the context stays at the default 4096, which is not much.
 
 ## What this repository guarantees — and what it doesn't
 
-Running `install.sh` on a fresh Arch with HyDE reproduces **every setting** on
-this machine: monitor, accented keyboard, keybinds, autostart, Spotify in the
-tray, kitty, VS Code, waybar scale, Ollama and both modules. The scripts are
-idempotent and were tested writing into a throwaway `HOME`.
+Running `install.sh` on a fresh Arch with HyDE restores the tracked machine
+configuration: monitor, accented keyboard, keybinds, autostart, Spotify in the
+tray, kitty, VS Code, waybar scale, Ollama, both modules, all currently
+published gallery themes, all active HyDE extras, and the CoreCtrl global
+profile. The CoreCtrl stage also verifies its persistent boot parameter and
+starts the application in the tray after Waybar. The scripts are idempotent;
+an error now makes the top-level installer exit non-zero instead of reporting
+a false success.
 
 What is **not** under this repository's control:
 
 | | |
 |---|---|
 | Package versions | nothing is pinned; installing today gets what the repos hold today |
-| HyDE themes | they come from HyDE's installer, not from here |
+| HyDE gallery | its catalog is upstream and may gain or retire themes; the run imports every entry available then |
+| Renamed HyDE extras | `trash-cli-git` is transparently fulfilled by the current Arch package `trash-cli` |
 | API keys | deliberately left out — they live with Hypr-IA (`/key` in the panel, or `~/.hypr-ia/.env`) |
 | The Ollama model | a few GB of download |
-| Different hardware | `setup.conf` needs editing; the example carries this machine's values |
+| Different hardware | `setup.conf` needs editing; in particular set `CORECTRL_RESTORE_PROFILE=0` outside this RX 7900 XT |
 
 ---
 

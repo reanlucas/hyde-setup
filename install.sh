@@ -32,13 +32,24 @@ sudo -v || exit 1
 KEEP=$!; trap 'kill $KEEP 2>/dev/null' EXIT
 
 filtro="${1:-}"
+falhou=0
 for etapa in scripts/*.sh; do
     nome="$(basename "$etapa")"
     [ -n "$filtro" ] && [[ "$nome" != "$filtro"* ]] && continue
     echo
     echo "════ $nome ════"
-    bash "$etapa" || echo "  (etapa $nome terminou com erro -- seguindo)"
+    if ! bash "$etapa"; then
+        echo "  (etapa $nome terminou com erro)" >&2
+        falhou=1
+    fi
 done
+
+if [ "$falhou" -ne 0 ]; then
+    echo
+    echo "════ Instalacao incompleta ════" >&2
+    echo "  Corrija as etapas que falharam e rode $BASE/install.sh novamente." >&2
+    exit 1
+fi
 
 echo
 echo "════ Pronto ════"

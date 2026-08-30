@@ -23,7 +23,7 @@ fi
 if [ ! -f "$HYPRIA/pyproject.toml" ]; then
     echo "==> Clonando a base do hypr-ia"
     git clone --depth 1 https://github.com/NousResearch/hermes-agent \
-        "$HYPRIA" || echo "    falhou o clone da base do hypr-ia" >&2
+        "$HYPRIA" || { echo "    ERRO: falhou o clone da base do hypr-ia" >&2; exit 1; }
 else
     echo "==> hypr-ia presente em $HYPRIA"
 fi
@@ -33,11 +33,13 @@ for repo in hyde-widgets hyde-ai; do
     alvo="$DEST/$repo"
     if [ -d "$alvo/.git" ]; then
         echo "==> Atualizando $repo"
-        git -C "$alvo" pull --ff-only || true
+        git -C "$alvo" pull --ff-only
     else
         echo "==> Clonando $repo"
         git clone "https://github.com/$USUARIO/$repo.git" "$alvo" || {
-            echo "    falhou o clone de $repo" >&2; continue; }
+            echo "    ERRO: falhou o clone de $repo" >&2; exit 1; }
     fi
-    [ -x "$alvo/install.sh" ] && "$alvo/install.sh"
+    [ -x "$alvo/install.sh" ] || {
+        echo "    ERRO: $repo nao possui install.sh executavel" >&2; exit 1; }
+    "$alvo/install.sh"
 done

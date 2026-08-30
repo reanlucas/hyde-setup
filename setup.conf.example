@@ -33,8 +33,18 @@ OLLAMA_PACOTE="ollama-rocm"       # ollama-rocm (AMD) | ollama (CPU/NVIDIA)
 OLLAMA_MODELO="qwen3.5:9b"        # cabe em 16 GB de VRAM com folga
 OLLAMA_CONTEXTO="32768"
 OLLAMA_KEEP_ALIVE="30m"
-GPU_LACT="1"                      # 60-gpu: LACT (tensao/clock/fan da GPU
-                                  # AMD) + amdgpu.ppfeaturemask na cmdline
+CORECTRL=1                          # 60-corectrl: unico controlador AMD
+CORECTRL_START_DELAY=5              # espera a bandeja da waybar antes de subir
+CORECTRL_RESTORE_PROFILE=1          # restaura o perfil desta RX 7900 XT
+                                  # (255 W, -60 mV); use 0 em outra GPU
+# CORECTRL_CMDLINE="/etc/kernel/cmdline" # UKI mkinitcpio; mude apenas se seu
+                                          # bootloader mantiver a cmdline em outro lugar
+
+# ── HyDE ─────────────────────────────────────────────────────────────────
+HYDE_DIR="$HOME/HyDE"              # checkout do HyDE instalado antes deste setup
+HYDE_EXTRAS=1                       # instala todas as entradas de pkg_extra.lst
+HYDE_TEMAS="galeria"               # galeria = todos os temas suportados pelo HyDE
+                                  # oficiais = so os 12 temas oficiais; 0 = nao instala
 
 # ── Widgets ──────────────────────────────────────────────────────────────
 WIDGETS_CAMADA="back"             # back = atras das janelas | front
