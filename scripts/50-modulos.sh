@@ -54,17 +54,17 @@ if [ "${SPOTIFY_TRAY:-0}" = "1" ]; then
         echo "    ERRO: configuracao ativa do Waybar nao existe: $waybar_cfg" >&2
         exit 1
     }
-    # O hyde-widgets injeta o grupo nos layouts da galeria. O config ativo,
-    # porem, pode ser um layout personalizado (ou um config que o HyDE marcou
-    # como "unknown") e nesse caso nao e copia de nenhum deles. Injete-o
-    # tambem, usando a mesma implementacao e os mesmos modulos do widget.
-    if ! grep -Fq 'group/hyde-spotify' "$waybar_cfg"; then
-        python3 "$BASE/scripts/injetar-waybar-spotify.py" \
-            "$HYDE_WIDGETS/waybar/instalar.py" "$waybar_cfg"
-        echo "    Waybar: widget injetado tambem no layout ativo"
-        unidade="hyde-${XDG_SESSION_DESKTOP:-Hyprland}-bar.service"
-        systemctl --user restart "$unidade" >/dev/null 2>&1 || true
-    fi
+    # A navegacao do HyDE inclui tanto ~/.config quanto ~/.local/share, sem
+    # eliminar layouts duplicados. Ajuste as duas galerias e o config ativo:
+    # assim o Spotify nao some ao usar --next/--prev. O titulo da janela ativa
+    # tambem e removido de todos eles, pois so repete informacao sem utilidade.
+    python3 "$BASE/scripts/injetar-waybar-spotify.py" \
+        "$HYDE_WIDGETS/waybar/instalar.py" \
+        "$waybar_cfg" \
+        "${XDG_CONFIG_HOME:-$HOME/.config}/waybar/layouts" \
+        "${XDG_DATA_HOME:-$HOME/.local/share}/waybar/layouts"
+    unidade="hyde-${XDG_SESSION_DESKTOP:-Hyprland}-bar.service"
+    systemctl --user restart "$unidade" >/dev/null 2>&1 || true
     grep -Fq 'group/hyde-spotify' "$waybar_cfg" || {
         echo "    ERRO: widget do Spotify nao entrou na configuracao ativa do Waybar" >&2
         exit 1

@@ -23,9 +23,12 @@ for repo in hyde-widgets hyde-ai; do
 printf 'install $repo\n' >>"\$MODULE_TEST_LOG"
 if [ "$repo" = "hyde-widgets" ]; then
     mkdir -p "\${XDG_CONFIG_HOME:-\$HOME/.config}/waybar" \
+        "\${XDG_DATA_HOME:-\$HOME/.local/share}/waybar/layouts" \
         "\$HOME/.local/lib/hyde-widgets"
-    printf '{"modules-center":[]}\n' \
+    printf '{"modules-center":["hyprland/window"]}\n' \
         >"\${XDG_CONFIG_HOME:-\$HOME/.config}/waybar/config.jsonc"
+    printf '{"modules-center":["hyprland/window"]}\n' \
+        >"\${XDG_DATA_HOME:-\$HOME/.local/share}/waybar/layouts/01.jsonc"
     touch "\$HOME/.local/lib/hyde-widgets/waybar-player"
     chmod +x "\$HOME/.local/lib/hyde-widgets/waybar-player"
 fi
@@ -68,6 +71,7 @@ chmod +x "$WORK/home/.local/bin/hyde-ai" "$WORK/bin/"*
 
 HOME="$WORK/home" \
 XDG_CONFIG_HOME="$WORK/home/.config" \
+XDG_DATA_HOME="$WORK/home/.local/share" \
 HYDE_SETUP_CONF="$WORK/setup.conf" \
 HYDE_SETUP_MODULOS="$WORK/src" \
 MODULE_TEST_LOG="$WORK/calls.log" \
@@ -79,5 +83,8 @@ grep -Fq 'install hyde-ai' "$WORK/calls.log"
 grep -Fq 'provider: ollama' "$WORK/home/.hypr-ia/config.yaml"
 grep -Fq 'default: qwen3.5:9b' "$WORK/home/.hypr-ia/config.yaml"
 grep -Fq 'group/hyde-spotify' "$WORK/home/.config/waybar/config.jsonc"
+! grep -Fq 'hyprland/window' "$WORK/home/.config/waybar/config.jsonc"
+grep -Fq 'group/hyde-spotify' "$WORK/home/.local/share/waybar/layouts/01.jsonc"
+! grep -Fq 'hyprland/window' "$WORK/home/.local/share/waybar/layouts/01.jsonc"
 
 printf 'ok: modules + Hypr-IA/Ollama\n'
